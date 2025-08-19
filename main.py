@@ -62,4 +62,4 @@ def search_terms(subs, events, ages, limit_per_query=100, cutoff_date="2020-01-0
 
 # Run it
 for i, row in enumerate(search_terms(SUBS, EVENTS, AGES, limit_per_query=10, cutoff_date="2025-01-01"), 1):
-    print(i, row["subreddit"], row["title"])
+    print(i, row["subreddit"], row["title"], row["selftext"])

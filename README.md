@@ -14,7 +14,7 @@ This project analyzes Reddit posts from parenting-related subreddits for specifi
 1. Clone the repository.
 2. Create a `.env` file with your Reddit API credentials:
 
-    ```
+    ```python
     REDDIT_CLIENT_ID=your_client_id
     REDDIT_CLIENT_SECRET=your_client_secret
     REDDIT_USER_AGENT=your_user_agent
@@ -22,13 +22,13 @@ This project analyzes Reddit posts from parenting-related subreddits for specifi
 
 3. Install dependencies:
 
-    ```
+    ```bash
     pip install praw python-dotenv
     ```
 
 4. Run the script:
 
-    ```
+    ```bash
     python main.py
     ```
 
