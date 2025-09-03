@@ -31,3 +31,6 @@ htmlcov/
 
 # Raw data files
 data
+data/raw/*
+data/interim/*
+data/processed/*
