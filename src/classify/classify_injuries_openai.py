@@ -88,24 +88,25 @@ def classify_post(client: OpenAI, title: str, body: str) -> Dict[str, Any]:
 
     user_prompt = f"""Classify this Reddit post.
 
-TITLE:
-{title or ''}
+    TITLE:
+    {title or ''}
 
-BODY:
-{body}
+    BODY:
+    {body}
 
-Return a single JSON object with exactly these keys and allowed values:
-{{
-  "is_injury_event": boolean,
-  "primary_injury_type": one of ["fall","head_injury","burn","scald","choking","swallowing","poisoning","ingestion","cut_laceration","fracture","dental","animal_bite","drowning","other","unknown"],
-  "body_region": one of ["head_face","neck","torso","arm_hand","leg_foot","multiple","unknown"],
-  "severity": one of ["minor","moderate","severe","unknown"],
-  "er_or_hospital_mentioned": boolean,
-  "age_group": one of ["newborn","infant","toddler","preschool","child_unspecified","unknown"],
-  "rationale_short": string (<=280 chars; paraphrase only)
-}}
-No prose. No code fences. JSON only.
-"""
+    Return a single JSON object with exactly these keys and allowed values:
+    {{
+    "is_injury_event": boolean,
+    "mechanism_of_injury": one of ["road_transport","fall","drowning","burn","scald","poisoning","choking_or_suffocation","foreign_body_ingestion","cut_pierce","struck_by_object","animal_related","other","unknown"],
+    "nature_of_injury": one of ["fracture","laceration","contusion","burn","poisoning","asphyxiation","internal_injury","dental_injury","multiple","other","unknown"],
+    "body_region": one of ["head_face","neck","torso","arm_hand","leg_foot","multiple","unknown"],
+    "er_or_hospital_mentioned": boolean,
+    "age_group": one of ["newborn","infant","toddler","preschool","child_unspecified","unknown"],
+    "rationale_short": string (<=280 chars; paraphrase only)
+    }}
+    No prose. No code fences. JSON only.
+    
+    """
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -129,9 +130,9 @@ No prose. No code fences. JSON only.
     except Exception as e:
         label = {
             "is_injury_event": False,
-            "primary_injury_type": "unknown",
+            "mechanism_of_injury": "unknown",
+            "nature_of_injury": "unknown",
             "body_region": "unknown",
-            "severity": "unknown",
             "er_or_hospital_mentioned": False,
             "age_group": "unknown",
             "rationale_short": f"parser_error: {e.__class__.__name__}"
@@ -174,7 +175,7 @@ def main():
 
     csv_fields = [
         "id","subreddit","created_utc","permalink","title",
-        "is_injury_event","primary_injury_type","body_region","severity",
+        "is_injury_event","mechanism_of_injury","nature_of_injury","body_region",
         "er_or_hospital_mentioned","age_group","rationale_short"
     ]
 

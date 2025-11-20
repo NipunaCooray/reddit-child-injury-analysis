@@ -18,8 +18,8 @@ reddit = praw.Reddit(
 )
 
 
-#SUBS = "Parenting+Mommit+Daddit+NewParents+ChildSafety+BabyBumps"
-SUBS = "Parenting"
+SUBS = "Parenting+Mommit+Daddit+NewParents+ChildSafety+BabyBumps+Nanny+Daycare+AskParents+BeyondTheBump"
+
 
 EVENTS = [
     "fell", "fall", "slipped", "hit head", "burn", "scald", "choked", "swallowed",
@@ -131,7 +131,7 @@ OUTFILE = f"data/raw/reddit_child_injury_{RUN_STAMP}.jsonl.gz"
 
 # Run it (stream -> print -> append)
 saved = 0
-for i, row in enumerate(search_terms(SUBS, EVENTS, AGES, limit_per_query=10, cutoff_date="2025-08-01"), 1):
+for i, row in enumerate(search_terms(SUBS, EVENTS, AGES, limit_per_query=100, cutoff_date="2020-01-01"), 1):
     safe = sanitise_row(row)
     print(i, safe["subreddit"], safe["title"], safe["selftext"][:120].replace("\n"," ") + ("..." if len(safe["selftext"]) > 120 else ""))
     append_jsonl_gz(safe, OUTFILE)

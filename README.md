@@ -20,7 +20,7 @@ src/
 ## Setup
 
 1. Clone the repository.
-2. Create a `.env` file with your Reddit API credentials:
+2. Create a `.env` file with your API credentials:
 
     ```ini
     REDDIT_CLIENT_ID=your_client_id
