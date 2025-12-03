@@ -37,7 +37,7 @@ def build_query(event, age):
     negatives = " ".join(f'-{w}' for w in EXCLUDES)
     return f'{core} {filters} {negatives}'
 
-def search_terms(subs, events, ages, limit_per_query=100, cutoff_date="2020-01-01"):
+def search_terms(subs, events, ages, limit_per_query=10, cutoff_date="2025-11-01"):
     cutoff_ts = datetime.datetime.fromisoformat(cutoff_date).timestamp()
     seen_ids = set()
     sub = reddit.subreddit(subs)
@@ -131,7 +131,7 @@ OUTFILE = f"data/raw/reddit_child_injury_{RUN_STAMP}.jsonl.gz"
 
 # Run it (stream -> print -> append)
 saved = 0
-for i, row in enumerate(search_terms(SUBS, EVENTS, AGES, limit_per_query=100, cutoff_date="2020-01-01"), 1):
+for i, row in enumerate(search_terms(SUBS, EVENTS, AGES, limit_per_query=10, cutoff_date="2025-11-01"), 1):
     safe = sanitise_row(row)
     print(i, safe["subreddit"], safe["title"], safe["selftext"][:120].replace("\n"," ") + ("..." if len(safe["selftext"]) > 120 else ""))
     append_jsonl_gz(safe, OUTFILE)

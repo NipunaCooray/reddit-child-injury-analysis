@@ -1,6 +1,8 @@
+# classify_injuries_openai.py
 #!/usr/bin/env python3
 """
-One-click VS Code classifier for child-injury Reddit posts (gpt-5-nano, Chat Completions JSON mode).
+One-click VS Code classifier for child-injury Reddit posts (gpt-5-nano, Chat Completions JSON mode)
+with client-side guardrails to enforce enums and consistency.
 
 Layout:
 reddit-injury/
@@ -36,6 +38,68 @@ Exclusions:
 Label conservatively: if uncertain the post is a real incident, set is_injury_event=false.
 Avoid exact long quotes; keep reasoning generic.
 """
+
+# ---------------- Guardrails (enums + normalizer) ----------------
+
+ENUMS = {
+    "mechanism_of_injury": {
+        "road_transport","fall","drowning","burn","scald","poisoning",
+        "choking_or_suffocation","foreign_body_ingestion","cut_pierce",
+        "struck_by_object","animal_related","other","unknown","not_applicable"
+    },
+    "nature_of_injury": {
+        "fracture","laceration","contusion","burn","poisoning","asphyxiation",
+        "internal_injury","dental_injury","multiple","other","unknown","not_applicable"
+    },
+    "body_region": {
+        "head_face","neck","torso","arm_hand","leg_foot","multiple","unknown","not_applicable"
+    },
+    "age_group": {
+        "newborn","infant","toddler","preschool","child_unspecified","unknown"
+    }
+}
+
+def _norm_str(x): 
+    return (x or "").strip().lower()
+
+def _norm_bool(x):
+    s = _norm_str(str(x))
+    return s in {"true","1","yes","y"}
+
+def normalize_label(label: dict) -> dict:
+    """
+    Enforce:
+      - booleans are proper bool
+      - strings are lowercase and within enums (else 'unknown')
+      - rationale <= 280 chars
+      - if is_injury_event == False -> mechanism/nature/body_region='not_applicable' and ER=False
+      - if is_injury_event == True  -> those fields cannot be 'not_applicable' (snap to 'unknown')
+    """
+    # Booleans
+    label["is_injury_event"] = _norm_bool(label.get("is_injury_event"))
+    label["er_or_hospital_mentioned"] = _norm_bool(label.get("er_or_hospital_mentioned"))
+
+    # Strings → lowercase + enum snap (default "unknown")
+    for k in ("mechanism_of_injury","nature_of_injury","body_region","age_group"):
+        v = _norm_str(label.get(k))
+        label[k] = v if v in ENUMS[k] else "unknown"
+
+    # Rationale cap
+    label["rationale_short"] = (label.get("rationale_short") or "")[:280]
+
+    # Guardrail rules
+    if not label["is_injury_event"]:
+        label["mechanism_of_injury"] = "not_applicable"
+        label["nature_of_injury"]    = "not_applicable"
+        label["body_region"]         = "not_applicable"
+        label["er_or_hospital_mentioned"] = False
+    else:
+        # Injury present → not_applicable not allowed on mechanism/nature/body_region
+        for k in ("mechanism_of_injury","nature_of_injury","body_region"):
+            if label[k] == "not_applicable":
+                label[k] = "unknown"
+
+    return label
 
 # ---------------- Minimal helpers ----------------
 
@@ -88,25 +152,24 @@ def classify_post(client: OpenAI, title: str, body: str) -> Dict[str, Any]:
 
     user_prompt = f"""Classify this Reddit post.
 
-    TITLE:
-    {title or ''}
+TITLE:
+{title or ''}
 
-    BODY:
-    {body}
+BODY:
+{body}
 
-    Return a single JSON object with exactly these keys and allowed values:
-    {{
-    "is_injury_event": boolean,
-    "mechanism_of_injury": one of ["road_transport","fall","drowning","burn","scald","poisoning","choking_or_suffocation","foreign_body_ingestion","cut_pierce","struck_by_object","animal_related","other","unknown"],
-    "nature_of_injury": one of ["fracture","laceration","contusion","burn","poisoning","asphyxiation","internal_injury","dental_injury","multiple","other","unknown"],
-    "body_region": one of ["head_face","neck","torso","arm_hand","leg_foot","multiple","unknown"],
-    "er_or_hospital_mentioned": boolean,
-    "age_group": one of ["newborn","infant","toddler","preschool","child_unspecified","unknown"],
-    "rationale_short": string (<=280 chars; paraphrase only)
-    }}
-    No prose. No code fences. JSON only.
-    
-    """
+Return a single JSON object with exactly these keys and allowed values:
+{{
+  "is_injury_event": boolean,
+  "mechanism_of_injury": one of ["road_transport","fall","drowning","burn","scald","poisoning","choking_or_suffocation","foreign_body_ingestion","cut_pierce","struck_by_object","animal_related","other","unknown","not_applicable"],
+  "nature_of_injury": one of ["fracture","laceration","contusion","burn","poisoning","asphyxiation","internal_injury","dental_injury","multiple","other","unknown","not_applicable"],
+  "body_region": one of ["head_face","neck","torso","arm_hand","leg_foot","multiple","unknown","not_applicable"],
+  "er_or_hospital_mentioned": boolean,
+  "age_group": one of ["newborn","infant","toddler","preschool","child_unspecified","unknown"],
+  "rationale_short": string (<=280 chars; paraphrase only)
+}}
+No prose. No code fences. JSON only.
+"""
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -128,6 +191,7 @@ def classify_post(client: OpenAI, title: str, body: str) -> Dict[str, Any]:
     try:
         label = json.loads(_extract_json(text))
     except Exception as e:
+        # Minimal safe defaults—guardrails will normalize further
         label = {
             "is_injury_event": False,
             "mechanism_of_injury": "unknown",
@@ -138,7 +202,8 @@ def classify_post(client: OpenAI, title: str, body: str) -> Dict[str, Any]:
             "rationale_short": f"parser_error: {e.__class__.__name__}"
         }
 
-    label["rationale_short"] = (label.get("rationale_short") or "")[:280]
+    # ---- Guardrails: enforce enums + consistency
+    label = normalize_label(label)
     return label
 
 # ---------------- Main ----------------
