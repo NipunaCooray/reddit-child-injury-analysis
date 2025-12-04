@@ -244,11 +244,26 @@ def main():
         "er_or_hospital_mentioned","age_group","rationale_short"
     ]
 
+    ALLOWED_LABEL_KEYS = {
+        "is_injury_event","mechanism_of_injury","nature_of_injury","body_region",
+        "er_or_hospital_mentioned","age_group","rationale_short"
+    }
+
+    def filter_label_keys(label: dict) -> dict:
+        """
+        Keep only the columns we write to CSV; set safe defaults; cap rationale.
+        """
+        out = {k: label.get(k, "") for k in ALLOWED_LABEL_KEYS}
+        if out["is_injury_event"] in ("", None): out["is_injury_event"] = False
+        if out["er_or_hospital_mentioned"] in ("", None): out["er_or_hospital_mentioned"] = False
+        out["rationale_short"] = (out.get("rationale_short") or "")[:280]
+        return out
+
     kept = rejected = 0
     with open(out_csv, "w", newline="", encoding="utf-8") as csv_fp, \
          open(out_jsonl, "w", encoding="utf-8") as jsonl_fp:
 
-        writer = csv.DictWriter(csv_fp, fieldnames=csv_fields)
+        writer = csv.DictWriter(csv_fp, fieldnames=csv_fields,extrasaction="ignore")
         writer.writeheader()
 
         for idx, rec in enumerate(posts, 1):
@@ -256,6 +271,12 @@ def main():
             body  = rec.get("selftext") or ""
 
             label = classify_post(client, title, body)
+            clean_label = filter_label_keys(label)
+
+            # optional: see what the model tried to add
+            extra = sorted(set(label.keys()) - ALLOWED_LABEL_KEYS)
+            if extra:
+                print(f"[warn] extra label keys ignored at idx {idx}: {extra}")
 
             writer.writerow({
                 "id": rec.get("id"),
@@ -263,7 +284,7 @@ def main():
                 "created_utc": rec.get("created_utc"),
                 "permalink": rec.get("permalink"),
                 "title": title,
-                **label
+                **clean_label
             })
 
             jsonl_fp.write(json.dumps({**rec, "**labels": label}, ensure_ascii=False) + "\n")
