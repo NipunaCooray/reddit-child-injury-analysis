@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """
-Cohen's kappa between two human coder CSVs (your revised schema).
+Cohen's kappa between two human coder CSVs (revised schema).
 
 Expected columns in each CSV (aligned by post_id):
 post_id, title, selftext, permalink, created_utc, subreddit,
 is_injury_event, mechanism_of_injury, nature_of_injury, body_region,
 er_or_hospital_mentioned, age_group, rationale_short, coder_id
+
+Usage:
+  python src/analysis/kappa_humans.py \
+    --coder-a data/interim/gold/sample_annotator_NC.csv \
+    --coder-b data/interim/gold/sample_annotator_SP.csv \
+    --out reports/metrics/kappa_summary.csv
 """
 
 import csv
@@ -53,9 +59,11 @@ def load_annotations(path: Path) -> dict:
     return data
 
 def main():
-    ap = argparse.ArgumentParser(description="Compute Cohen's kappa between two human coders.")
+    ap = argparse.ArgumentParser(description="Compute Cohen's kappa between two human coder CSVs.")
     ap.add_argument("--coder-a", required=True, help="CSV from annotator A")
     ap.add_argument("--coder-b", required=True, help="CSV from annotator B")
+    ap.add_argument("--out", default="reports/metrics/kappa_summary.csv",
+                    help="Output CSV path for summary metrics")
     args = ap.parse_args()
 
     A = load_annotations(Path(args.coder_a))
@@ -66,6 +74,8 @@ def main():
         raise SystemExit("No overlapping post_id between the two CSVs.")
 
     print(f"Comparing {len(common)} posts\n")
+
+    rows_out = []
     for field in FIELDS:
         y_true, y_pred = [], []
         for pid in common:
@@ -78,12 +88,32 @@ def main():
 
         n = len(y_true)
         if n == 0:
+            kappa = float("nan")
+            agreement = float("nan")
             print(f"{field:>22}:  kappa=nan  agreement=nan  n=0 (no overlapping non-empty labels)")
-            continue
+        else:
+            kappa = cohen_kappa_score(y_true, y_pred)
+            agreement = sum(1 for i in range(n) if y_true[i] == y_pred[i]) / n
+            print(f"{field:>22}:  kappa={kappa:.3f}  agreement={agreement:.3f}  n={n}")
 
-        kappa = cohen_kappa_score(y_true, y_pred)
-        agreement = sum(1 for i in range(n) if y_true[i] == y_pred[i]) / n
-        print(f"{field:>22}:  kappa={kappa:.3f}  agreement={agreement:.3f}  n={n}")
+        rows_out.append({"field": field, "kappa": kappa, "agreement": agreement, "n": n})
+
+    # Write summary CSV
+    out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", newline="", encoding="utf-8") as fp:
+        w = csv.DictWriter(fp, fieldnames=["field","kappa","agreement","n"])
+        w.writeheader()
+        for r in rows_out:
+            # format numbers for easier spreadsheet use
+            row = dict(r)
+            if isinstance(row["kappa"], float):
+                row["kappa"] = f"{row['kappa']:.6f}" if row["n"] else ""
+            if isinstance(row["agreement"], float):
+                row["agreement"] = f"{row['agreement']:.6f}" if row["n"] else ""
+            w.writerow(row)
+
+    print(f"\nSaved summary -> {out_path}")
 
 if __name__ == "__main__":
     main()
