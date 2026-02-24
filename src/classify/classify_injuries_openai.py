@@ -3,20 +3,10 @@
 """
 One-click VS Code classifier for child-injury Reddit posts (gpt-5-nano, Chat Completions JSON mode)
 with client-side guardrails to enforce enums and consistency.
-
-Layout:
-reddit-injury/
-  data/
-    raw/
-    interim/
-    processed/
-  src/
-    search/
-    classify/
-      classify_injuries_openai.py
+Now includes wall-clock timing (total, posts/sec, sec/post) and optional temperature control.
 """
 
-import os, json, csv, gzip, re
+import os, json, csv, gzip, re, time
 from pathlib import Path
 from typing import Dict, Any
 from tenacity import retry, stop_after_attempt, wait_exponential_jitter
@@ -24,7 +14,8 @@ from openai import OpenAI, BadRequestError
 
 # ---------------- Config ----------------
 
-MODEL_NAME = "gpt-5-nano"  # good price/perf for classification
+MODEL_NAME = "gpt-5-nano"   # change here to test other models (e.g., "gpt-4.1-mini")
+TEMPERATURE = None          # set e.g. 0.2 for models that support it; keep None for nano
 
 SYSTEM_PROMPT = """You are a careful public-health coder.
 Task: Decide if a Reddit post describes a REAL child injury incident and classify it.
@@ -59,7 +50,7 @@ ENUMS = {
     }
 }
 
-def _norm_str(x): 
+def _norm_str(x):
     return (x or "").strip().lower()
 
 def _norm_bool(x):
@@ -67,34 +58,21 @@ def _norm_bool(x):
     return s in {"true","1","yes","y"}
 
 def normalize_label(label: dict) -> dict:
-    """
-    Enforce:
-      - booleans are proper bool
-      - strings are lowercase and within enums (else 'unknown')
-      - rationale <= 280 chars
-      - if is_injury_event == False -> mechanism/nature/body_region='not_applicable' and ER=False
-      - if is_injury_event == True  -> those fields cannot be 'not_applicable' (snap to 'unknown')
-    """
-    # Booleans
     label["is_injury_event"] = _norm_bool(label.get("is_injury_event"))
     label["er_or_hospital_mentioned"] = _norm_bool(label.get("er_or_hospital_mentioned"))
 
-    # Strings → lowercase + enum snap (default "unknown")
     for k in ("mechanism_of_injury","nature_of_injury","body_region","age_group"):
         v = _norm_str(label.get(k))
         label[k] = v if v in ENUMS[k] else "unknown"
 
-    # Rationale cap
     label["rationale_short"] = (label.get("rationale_short") or "")[:280]
 
-    # Guardrail rules
     if not label["is_injury_event"]:
         label["mechanism_of_injury"] = "not_applicable"
         label["nature_of_injury"]    = "not_applicable"
         label["body_region"]         = "not_applicable"
         label["er_or_hospital_mentioned"] = False
     else:
-        # Injury present → not_applicable not allowed on mechanism/nature/body_region
         for k in ("mechanism_of_injury","nature_of_injury","body_region"):
             if label[k] == "not_applicable":
                 label[k] = "unknown"
@@ -176,14 +154,18 @@ No prose. No code fences. JSON only.
         {"role": "user",   "content": user_prompt},
     ]
 
-    # Do NOT send temperature (gpt-5-nano only supports default)
+    # Build kwargs with optional temperature; retry without if unsupported
     kwargs = dict(model=MODEL_NAME, messages=messages)
+    if TEMPERATURE is not None:
+        kwargs["temperature"] = float(TEMPERATURE)
 
-    # Try JSON mode; if SDK/model rejects response_format, retry without it.
     try:
         kwargs["response_format"] = {"type": "json_object"}
         resp = client.chat.completions.create(**kwargs)
-    except (TypeError, BadRequestError):
+    except (TypeError, BadRequestError) as e:
+        emsg = str(e).lower()
+        if "temperature" in emsg and "unsupported" in emsg:
+            kwargs.pop("temperature", None)
         kwargs.pop("response_format", None)
         resp = client.chat.completions.create(**kwargs)
 
@@ -191,7 +173,6 @@ No prose. No code fences. JSON only.
     try:
         label = json.loads(_extract_json(text))
     except Exception as e:
-        # Minimal safe defaults—guardrails will normalize further
         label = {
             "is_injury_event": False,
             "mechanism_of_injury": "unknown",
@@ -202,9 +183,7 @@ No prose. No code fences. JSON only.
             "rationale_short": f"parser_error: {e.__class__.__name__}"
         }
 
-    # ---- Guardrails: enforce enums + consistency
-    label = normalize_label(label)
-    return label
+    return normalize_label(label)
 
 # ---------------- Main ----------------
 
@@ -217,12 +196,14 @@ def main():
     raw_dir = repo_root / "data" / "raw"
     inp_path = newest_raw_file(raw_dir)
     print(f"Using input: {inp_path}")
+    print(f"Model: {MODEL_NAME} | temperature: {TEMPERATURE if TEMPERATURE is not None else 'default'}")
 
     out_dir = repo_root / "data" / "interim"
     out_dir.mkdir(parents=True, exist_ok=True)
     base = stem_for_output(inp_path)
     out_csv = out_dir / f"{base}_labels.csv"
     out_jsonl = out_dir / f"{base}_labels.jsonl"
+    out_metrics = out_dir / f"{base}_timing.json"  # timing summary
 
     client = OpenAI()  # reads OPENAI_API_KEY
 
@@ -250,9 +231,6 @@ def main():
     }
 
     def filter_label_keys(label: dict) -> dict:
-        """
-        Keep only the columns we write to CSV; set safe defaults; cap rationale.
-        """
         out = {k: label.get(k, "") for k in ALLOWED_LABEL_KEYS}
         if out["is_injury_event"] in ("", None): out["is_injury_event"] = False
         if out["er_or_hospital_mentioned"] in ("", None): out["er_or_hospital_mentioned"] = False
@@ -260,10 +238,15 @@ def main():
         return out
 
     kept = rejected = 0
+    processed = 0
+
+    # ---- start timing just before classification loop
+    t0 = time.perf_counter()
+
     with open(out_csv, "w", newline="", encoding="utf-8") as csv_fp, \
          open(out_jsonl, "w", encoding="utf-8") as jsonl_fp:
 
-        writer = csv.DictWriter(csv_fp, fieldnames=csv_fields,extrasaction="ignore")
+        writer = csv.DictWriter(csv_fp, fieldnames=csv_fields, extrasaction="ignore")
         writer.writeheader()
 
         for idx, rec in enumerate(posts, 1):
@@ -273,7 +256,6 @@ def main():
             label = classify_post(client, title, body)
             clean_label = filter_label_keys(label)
 
-            # optional: see what the model tried to add
             extra = sorted(set(label.keys()) - ALLOWED_LABEL_KEYS)
             if extra:
                 print(f"[warn] extra label keys ignored at idx {idx}: {extra}")
@@ -287,9 +269,10 @@ def main():
                 **clean_label
             })
 
-            jsonl_fp.write(json.dumps({**rec, "**labels": label}, ensure_ascii=False) + "\n")
+            jsonl_fp.write(json.dumps({**rec, "**labels": clean_label}, ensure_ascii=False) + "\n")
 
-            if label.get("is_injury_event"):
+            processed += 1
+            if clean_label.get("is_injury_event"):
                 kept += 1
             else:
                 rejected += 1
@@ -297,7 +280,38 @@ def main():
             if idx % 25 == 0 or idx == total:
                 print(f"[{idx}/{total}] kept={kept} rejected={rejected}")
 
-    print(f"Done.\nCSV: {out_csv}\nJSONL: {out_jsonl}")
+    # ---- stop timing after loop
+    t1 = time.perf_counter()
+    elapsed_sec = t1 - t0
+    sec_per_post = elapsed_sec / processed if processed else float("nan")
+    posts_per_sec = processed / elapsed_sec if elapsed_sec > 0 else float("nan")
+
+    print("\nTiming summary")
+    print(f"  processed posts : {processed}")
+    print(f"  total time      : {elapsed_sec:.2f} s")
+    print(f"  posts/sec       : {posts_per_sec:.3f}")
+    print(f"  sec/post        : {sec_per_post:.3f}")
+
+    try:
+        with open(out_metrics, "w", encoding="utf-8") as mfp:
+            json.dump({
+                "input_file": str(inp_path),
+                "output_csv": str(out_csv),
+                "output_jsonl": str(out_jsonl),
+                "processed": processed,
+                "kept": kept,
+                "rejected": rejected,
+                "elapsed_seconds": elapsed_sec,
+                "posts_per_second": posts_per_sec,
+                "seconds_per_post": sec_per_post,
+                "model": MODEL_NAME,
+                "temperature": TEMPERATURE if TEMPERATURE is not None else "default",
+            }, mfp, ensure_ascii=False, indent=2)
+        print(f"\nSaved timing metrics -> {out_metrics}")
+    except Exception as e:
+        print(f"[warn] could not write timing metrics: {e}")
+
+    print(f"\nDone.\nCSV: {out_csv}\nJSONL: {out_jsonl}")
 
 if __name__ == "__main__":
     main()

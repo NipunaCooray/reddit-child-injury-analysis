@@ -1,7 +1,0 @@
-field,kappa,agreement,n
-is_injury_event,0.730171,0.927100,631
-mechanism_of_injury,0.669284,0.904913,631
-nature_of_injury,0.625350,0.893819,631
-body_region,0.574721,0.881141,631
-er_or_hospital_mentioned,0.669039,0.966614,629
-age_group,0.527144,0.638669,631

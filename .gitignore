@@ -34,3 +34,6 @@ data
 data/raw/*
 data/interim/*
 data/processed/*
+
+# Reports outputs
+reports/

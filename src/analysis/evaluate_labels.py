@@ -18,7 +18,7 @@ Model CSV schema (from classifier):
 Usage:
   python src/analysis/evaluate_labels.py \
     --gold data/interim/gold/sample_adjudicated.csv \
-    --model data/interim/reddit_child_injury_YYYYMMDD_labels.csv \
+    --model data/interim/reddit_child_injury_20251112_labels.csv \
     --outdir reports/metrics
 """
 
