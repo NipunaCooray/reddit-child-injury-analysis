@@ -27,6 +27,7 @@ Exclusions:
 - metaphor (e.g., “fell in love”, “fall behind”);
 - purely hypothetical (“what if my child fell”), advice-only without an actual event, or adult injuries (unless they directly concern harm to the child).
 Label conservatively: if uncertain the post is a real incident, set is_injury_event=false.
+If is_injury_event=false, set age_group='not_applicable'.
 Avoid exact long quotes; keep reasoning generic.
 """
 
@@ -46,7 +47,7 @@ ENUMS = {
         "head_face","neck","torso","arm_hand","leg_foot","multiple","unknown","not_applicable"
     },
     "age_group": {
-        "newborn","infant","toddler","preschool","child_unspecified","unknown"
+        "newborn","infant","toddler","preschool","child_unspecified","unknown","not_applicable"
     }
 }
 
@@ -71,9 +72,10 @@ def normalize_label(label: dict) -> dict:
         label["mechanism_of_injury"] = "not_applicable"
         label["nature_of_injury"]    = "not_applicable"
         label["body_region"]         = "not_applicable"
+        label["age_group"]           = "not_applicable"
         label["er_or_hospital_mentioned"] = False
     else:
-        for k in ("mechanism_of_injury","nature_of_injury","body_region"):
+        for k in ("mechanism_of_injury","nature_of_injury","body_region","age_group"):
             if label[k] == "not_applicable":
                 label[k] = "unknown"
 
@@ -143,7 +145,7 @@ Return a single JSON object with exactly these keys and allowed values:
   "nature_of_injury": one of ["fracture","laceration","contusion","burn","poisoning","asphyxiation","internal_injury","dental_injury","multiple","other","unknown","not_applicable"],
   "body_region": one of ["head_face","neck","torso","arm_hand","leg_foot","multiple","unknown","not_applicable"],
   "er_or_hospital_mentioned": boolean,
-  "age_group": one of ["newborn","infant","toddler","preschool","child_unspecified","unknown"],
+  "age_group": one of ["newborn","infant","toddler","preschool","child_unspecified","unknown","not_applicable"],
   "rationale_short": string (<=280 chars; paraphrase only)
 }}
 No prose. No code fences. JSON only.
