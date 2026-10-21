@@ -145,7 +145,7 @@ def main():
                           "commit, email or upload it unless the study lead says otherwise."),
         ("Purpose", "Check the model against the post to (1) lock the schema, (2) confirm the model before the full run, "
                     "(3) settle the audit edge cases. This is NOT the formal reliability study: that comes later on a fresh "
-                    "random sample, coded blind by two people. Full protocol: src/extract/HAND_REVIEW.md"),
+                    "stratified sample, coded blind by two people. Full protocol: src/extract/HAND_REVIEW.md"),
         ("Yellow cells", "Only edit yellow cells: Reviewer (above), Review!N:P, Decision log!D:H, Posts!F. Everything else is generated."),
         ("Step 1", "Open 'Posts', read post N in full BEFORE looking at any model output. Note what happened, who was watching, "
                    "where, what help was sought, and whether this is really an injury."),

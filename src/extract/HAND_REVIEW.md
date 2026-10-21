@@ -16,7 +16,7 @@ This review checks one model's extraction against each post, cell by cell. It ha
 2. **Confirm the model before the full run.** In particular, check whether its inferences are justified by the post.
 3. **Settle the audit edge cases.** Decide how borderline posts count for `injury_event_check`, and therefore for Phase 1.
 
-It is **not** the reliability study the manuscript cites. The pilot posts shaped the schema, so they can't also validate it. Reliability comes later: a fresh random sample from the full run, coded **blind** by two people, with Cohen's kappa reported. See the last section.
+It is **not** the reliability study the manuscript cites. The pilot posts shaped the schema, so they can't also validate it. Reliability comes later: a fresh **stratified** sample from the full run, coded **blind** by two people, with agreement statistics reported. See the last section.
 
 ## Build the workbook
 
@@ -101,9 +101,12 @@ The log becomes the codebook, the `schema.py` changes and the Methods text, so w
 
 ## The formal reliability study (later)
 
-After the full run:
-1. Draw a **random** sample of about 100–150 posts that are not from the pilot.
-2. Two coders each code the key fields **blind**, without seeing model output, using the final codebook.
-3. Report Cohen's kappa between the coders, and between each coder and the model, for the enumerated fields. For the free-text fields, report quote-support accuracy.
+This follows the study guide's "What coders do" section, which is the authoritative design. After the full run:
 
-The workbook built here can be reused for that study with the model columns removed; ask for a blind variant when you get there.
+1. **Timing check.** Time blind coding on a small set of posts. Verification is faster than coding from scratch, so times from this review underestimate it. That figure sets how large the deep tier can be.
+2. **Deep tier.** Draw a **stratified** sample that over-samples rarer mechanisms rather than reproducing the corpus distribution. Exclude the 60 pilot posts, because this reviewer has seen the model's output for them. Two coders each code all fields **blind**, from the narrative alone, using the locked codebook.
+3. **Adjudication.** Work through disagreements and log each one with its resolution.
+4. **Statistics.** Cohen's kappa or PABAK for enumerated fields, and span-level precision and recall for free-text fields: between the coders, and between each coder and the model.
+5. **Targeted tier.** A larger sample on the four fields the conclusions rest on: `supervision_status`, `object_involved`, `mechanism_detail` and `care_pathway_outcome`.
+
+The coding there differs from this review. Coders write each cell's value, status and quote themselves rather than judging the model's, so that study needs a blind workbook with no model columns; ask for one when you get there.
