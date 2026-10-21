@@ -10,6 +10,7 @@ src/
     crawler.py                # Crawls Reddit for relevant posts
   classify/
     classify_injuries_openai.py  # Classifies injuries using OpenAI
+  extract/                       # Phase 2: Haddon/ICECI event extraction (see src/extract/README.md)
 ```
 
 ## Features
