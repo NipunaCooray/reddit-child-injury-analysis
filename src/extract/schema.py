@@ -15,7 +15,9 @@ child-specific values ICECI's core does not carry (button batteries, sleep
 surfaces, developmental triggers, supervision granularity). They have NOT been
 transcribed from the canonical ICECI data dictionary. Before any manuscript
 claims ICECI coding, check each enumeration against the published ICECI
-documentation and state the adaptation explicitly in the Methods.
+documentation and state the adaptation explicitly in the Methods. WHO no longer
+maintains ICECI and has carried its elements into ICD-11 as extension codes, so
+the check should also cover the ICD-11 external-cause extension codes.
 
 SCHEMA VERSIONING
 -----------------

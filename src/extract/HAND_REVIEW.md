@@ -4,6 +4,8 @@ This protocol is for whoever checks the pilot extractions against the posts. The
 
 **Read the study guide first:** [Phase 2 Study Guide and Codebook](https://claude.ai/artifact/AmnHgTaUPuqYjf5fYBct3W). It covers what the study is, the status decision, the coding notes that settle the common hard cases, and a worked example. This protocol assumes you have read it. If the link doesn't open, ask the study lead to share it with you.
 
+**Point of contact:** Nipuna Cooray (study lead). Raise questions, ambiguities and difficult days with them; agree a daily cap before you start.
+
 **Getting the workbook.** It contains full post text, so it is never committed (`reports/` is git-ignored). Either build it yourself (below; this needs the pilot output files) or get a copy from the study lead. Keep it on your own machine, and don't email or upload it unless the study lead says otherwise.
 
 ## What this review is, and is not

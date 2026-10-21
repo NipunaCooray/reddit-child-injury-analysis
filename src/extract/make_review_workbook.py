@@ -140,6 +140,7 @@ def main():
         ("Reviewer", ""),
         ("Read first", f"Study guide and codebook (what the study is, the status decision, coding notes, a worked example): "
                        f"{STUDY_GUIDE_URL}  |  Protocol for this review: src/extract/HAND_REVIEW.md in the repo."),
+        ("Point of contact", "Nipuna Cooray (study lead): questions, ambiguities, and difficult days. Agree a daily cap before you start."),
         ("Data handling", "This file contains full post text about injured children. Keep it on your own machine; do not "
                           "commit, email or upload it unless the study lead says otherwise."),
         ("Purpose", "Check the model against the post to (1) lock the schema, (2) confirm the model before the full run, "

@@ -2,7 +2,7 @@
 
 Phase 1 (`src/classify/`) answers *was this a real child injury event?* Phase 2 answers *how did it unfold?* For each confirmed event it extracts 24 structured fields across the Haddon pre-event / event / post-event phases plus four interpretive fields. Every field carries a verbatim evidence span and a `stated | inferred | not_stated` status.
 
-> **ICECI provenance warning.** The controlled vocabularies in `schema.py` are **adapted from** the ICECI framework and extended with child-specific values ICECI's core does not carry (button batteries, sleep surfaces, developmental triggers, supervision granularity). They have **not** been transcribed from the canonical ICECI data dictionary. Before any manuscript claims ICECI coding, check each enumeration against the published ICECI documentation and state the adaptation explicitly in the Methods.
+> **ICECI provenance warning.** The controlled vocabularies in `schema.py` are **adapted from** the ICECI framework and extended with child-specific values ICECI's core does not carry (button batteries, sleep surfaces, developmental triggers, supervision granularity). They have **not** been transcribed from the canonical ICECI data dictionary. Before any manuscript claims ICECI coding, check each enumeration against the published ICECI documentation and state the adaptation explicitly in the Methods. WHO no longer maintains ICECI and has carried its elements into ICD-11 as extension codes ([WHO](https://who.int/standards/classifications/other-classifications/international-classification-of-external-causes-of-injury)), so the check should also cover the ICD-11 external-cause extension codes.
 
 ## Files
 
