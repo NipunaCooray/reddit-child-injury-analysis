@@ -15,7 +15,8 @@ Phase 1 (`src/classify/`) answers *was this a real child injury event?* Phase 2 
 | `extract_events_openai.py` | Extraction runner. |
 | `validate_extractions.py` | Automated QA tier. |
 | `compare_extractions.py` | Side-by-side comparison of runs on the same posts (model choice) and the hand-review sheet. |
-| `make_review_workbook.py` | Builds the hand-review Excel workbook; protocol in `HAND_REVIEW.md`. Needs `openpyxl`. |
+| `make_review_md.py` | Builds the single-reviewer hand-review file: definitions, then each post with the model's answers (Markdown, local only). |
+| `make_review_workbook.py` | Builds the multi-reviewer hand-review Excel workbook with per-cell verdicts; protocol in `HAND_REVIEW.md`. Needs `openpyxl`. |
 
 Tests: `python -m unittest tests/test_extract_schema.py` from the repo root.
 

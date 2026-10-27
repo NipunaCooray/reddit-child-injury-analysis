@@ -1,5 +1,13 @@
 # Phase 2 pilot — hand-review protocol
 
+> **Current pilot review: use the Markdown file.** With one reviewer, the pilot is checked using a single Markdown file: a definitions reference, then each post with the model's answers, and a **My notes** space per post. Build it with:
+>
+> ```bash
+> python src/extract/make_review_md.py --in data/interim/pilot60_stratified_extractions_gpt55.jsonl
+> ```
+>
+> It writes `reports/extraction_qa/hand_review/<input stem>_review.md` (git-ignored, because it holds full post text). Open it in a Markdown preview so the tables render and the field links work. The workbook protocol below is kept for when more than one reviewer is involved; its reasoning (read the post first, prefer `not_stated`, where to spend effort) applies to both.
+
 This protocol is for whoever checks the pilot extractions against the posts. The workbook's `Instructions` sheet is the short version. This file gives the reasons behind each step.
 
 **Read the study guide first:** [Phase 2 Study Guide and Codebook](https://claude.ai/artifact/AmnHgTaUPuqYjf5fYBct3W). It covers what the study is, the status decision, the coding notes that settle the common hard cases, and a worked example. This protocol assumes you have read it. If the link doesn't open, ask the study lead to share it with you.
