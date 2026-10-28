@@ -18,7 +18,7 @@ from pathlib import Path
 
 from common import find_repo_root, load_jsonl
 from schema import (FIELDS, FIELD_NAMES, FALL_MECHANISMS, CONDITIONAL_FALL_FIELDS,
-                    AUDIT_FIELD, AUDIT_NEGATIVE,
+                    AUDIT_FIELD, AUDIT_NEGATIVE, AUDIT_NEAR_MISS,
                     SCOPE_LIMITED_FIELDS, RARE_BY_DESIGN_FIELDS, STATUSES, field_type)
 
 NOT_STATED_CUT = 0.80
@@ -168,23 +168,28 @@ def main():
 
     # ---- Phase 1 audit: the extraction model's independent injury_event_check vs Phase 1
     # Every input post was accepted by Phase 1, so not_an_injury_event marks a candidate
-    # false positive. Candidates, not errors: each needs a human read.
+    # false positive. Candidates, not errors: each needs a human read. Near misses are
+    # listed too but counted separately: whether they are in scope is a study decision.
     audit = {"available": AUDIT_FIELD in parsed[0]["fields"]} if parsed else {"available": False}
     disagreements = []
     if audit["available"]:
         values = Counter(r["fields"][AUDIT_FIELD]["value"] or "not_stated" for r in parsed)
         for r in parsed:
             v = r["fields"][AUDIT_FIELD]["value"]
-            if v in AUDIT_NEGATIVE:
+            if v in AUDIT_NEGATIVE | AUDIT_NEAR_MISS:
                 disagreements.append({"id": r["id"], "title": r["title"], "injury_event_check": v, "status": r["fields"][AUDIT_FIELD]["status"],
                                       "evidence_span": r["fields"][AUDIT_FIELD]["evidence_span"] or "",
                                       "permalink": r.get("permalink", "")})
-        audit.update({"values": dict(values), "n": n_parsed, "n_candidate_false_positives": len(disagreements),
-                      "pct_candidate_false_positives": round(pct(len(disagreements), n_parsed), 1)})
+        n_fp = sum(d["injury_event_check"] in AUDIT_NEGATIVE for d in disagreements)
+        n_nm = len(disagreements) - n_fp
+        audit.update({"values": dict(values), "n": n_parsed, "n_candidate_false_positives": n_fp,
+                      "pct_candidate_false_positives": round(pct(n_fp, n_parsed), 1),
+                      "n_near_miss": n_nm, "pct_near_miss": round(pct(n_nm, n_parsed), 1)})
         print(f"\nPhase 1 audit ({AUDIT_FIELD})")
         for v, k in values.most_common():
             print(f"  {v:<26}{k:>5}  ({pct(k, n_parsed):.0f}%)")
-        print(f"  -> candidate false positives: {len(disagreements)}/{n_parsed} ({pct(len(disagreements), n_parsed):.0f}%). "
+        print(f"  -> candidate false positives: {n_fp}/{n_parsed} ({pct(n_fp, n_parsed):.0f}%); "
+              f"near misses: {n_nm}/{n_parsed} ({pct(n_nm, n_parsed):.0f}%). "
               "Hand-check each in audit_disagreements.csv before citing a rate.")
         for d in disagreements:
             print(f"     {d['id']}  {d['injury_event_check']:<22} {d['title'][:60]}")

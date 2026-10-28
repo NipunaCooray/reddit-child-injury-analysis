@@ -3,7 +3,7 @@
 > **Current pilot review: use the Markdown file.** With one reviewer, the pilot is checked using a single Markdown file: a definitions reference, then each post with the model's answers, and a **My notes** space per post. Build it with:
 >
 > ```bash
-> python src/extract/make_review_md.py --in data/interim/pilot60_stratified_extractions_gpt55.jsonl
+> python src/extract/make_review_md.py --in data/interim/pilot60_stratified_extractions_gpt55_v14.jsonl
 > ```
 >
 > It writes `reports/extraction_qa/hand_review/<input stem>_review.md` (git-ignored, because it holds full post text). Open it in a Markdown preview so the tables render and the field links work. The workbook protocol below is kept for when more than one reviewer is involved; its reasoning (read the post first, prefer `not_stated`, where to spend effort) applies to both.
@@ -80,7 +80,7 @@ Tier 1 rows are shaded and should be reviewed on **every** post. They are:
 Tier 2 rows need only a quick check. If time is short, finish tier 1 on all posts before starting tier 2 on any.
 
 - **`supervision_status`:** check every *inferred* value against the Codebook glosses. The prevention argument rests on this field, and `gpt-5.5` infers 43% of its values.
-- **`injury_event_check`:** the 24 posts that any model flagged are the ones that matter. Answer the open questions in the Decision log; the same rules then apply to Phase 1's case definition. Status rule (schema 1.3.0): `stated` if the post explicitly describes the incident and the harm, or explicitly says no harm occurred; `inferred` if the judgement rests on the post as a whole. This field is never `not_stated`; a post you can't judge is `unclear`.
+- **`injury_event_check`:** the 24 posts that any model flagged are the ones that matter. Answer the open questions in the Decision log; the same rules then apply to Phase 1's case definition. Status rule (schema 1.3.0): `stated` if the post explicitly describes the incident and the harm, or explicitly says no harm occurred; `inferred` if the judgement rests on the post as a whole. This field is never `not_stated`; a post you can't judge is `unclear`. From schema 1.4.0, a real hazardous incident with no injury and none suspected is `near_miss`, not `not_an_injury_event`; if harm may have occurred, it is `suspected_injury_event`.
 - **Free-text fields:** check the quote supports the value. Don't spend time on wording.
 
 ## Decision log

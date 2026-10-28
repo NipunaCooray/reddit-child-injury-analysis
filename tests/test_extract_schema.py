@@ -242,6 +242,7 @@ class TestAudit(unittest.TestCase):
     def test_audit_near_miss_snaps(self):
         self.assertEqual(snap_enum(AUDIT_FIELD, "no_injury_event")[:2], ("not_an_injury_event", "enum_snapped"))
         self.assertEqual(snap_enum(AUDIT_FIELD, "injury_event")[1], "enum_ambiguous")
+        self.assertEqual(snap_enum(AUDIT_FIELD, "Near-miss")[0], "near_miss")
 
     def test_audit_cell_grounded_like_any_field(self):
         r = normalize_extraction({AUDIT_FIELD: cell("not_an_injury_event", "she slept through the night")}, POST_A)
