@@ -1,0 +1,1423 @@
+{
+ "schema_version": "1.5.0",
+ "note": "Constructed tutorial posts for the coding app. Invented for training; not from the corpus. Every key is checked against schema.py by tests/test_extract_schema.py.",
+ "rulings": [
+  {
+   "post": "tutorial-1-stairs",
+   "field": "help_seeking",
+   "ruling": "When the forum question is about prevention rather than about the incident, help_seeking is none, not forum_advice_only."
+  },
+  {
+   "post": "tutorial-1-stairs",
+   "field": "landing_surface",
+   "ruling": "A fall stopped before the child hit anything has no fall_height and no landing_surface."
+  },
+  {
+   "post": "tutorial-1-stairs",
+   "field": "mechanism_iceci",
+   "ruling": "A near miss is coded with the mechanism of what actually happened (a fall that was stopped is fall_down_stairs), not as unspecified."
+  },
+  {
+   "post": "tutorial-1-stairs",
+   "field": "hazard_state",
+   "ruling": "Don't infer the hazard state backwards from a countermeasure ('we're putting gates in')."
+  },
+  {
+   "post": "tutorial-2-change-table",
+   "field": "supervision_status",
+   "ruling": "When an adult other than the poster was responsible, supervised_by_other_adult takes precedence over how closely they watched (here, proximate), which goes in supervisor_activity. This loses the gradation for those events; the alternative is to code the gradation and record who in others_present."
+  },
+  {
+   "post": "tutorial-2-change-table",
+   "field": "object_category",
+   "ruling": "A change table is furniture, not pram_cot_or_highchair."
+  },
+  {
+   "post": "all",
+   "field": "others_present",
+   "ruling": "Silence is not 'alone': others_present is not_stated unless the post says who else was, or wasn't, there."
+  },
+  {
+   "post": "tutorial-3-medicine",
+   "field": "injury_event_check",
+   "ruling": "Uncertain whether any was swallowed: suspected_injury_event. A stated ingestion or excess dose would be actual_injury_event even with no symptoms (schema 1.5.0; see tutorial-6)."
+  },
+  {
+   "post": "tutorial-3-medicine",
+   "field": "stated_counterfactual",
+   "ruling": "An admitted omission ('didn't click the lid back on') is an inferred counterfactual, following the TV worked example."
+  },
+  {
+   "post": "tutorial-4-scald",
+   "field": "care_pathway_outcome",
+   "ruling": "A referral already made counts as specialist_referral, even before the appointment, rather than ongoing_or_pending."
+  },
+  {
+   "post": "tutorial-4-scald",
+   "field": "witnessed",
+   "ruling": "If the post doesn't say whether the caregiver saw it, witnessed is not_stated, even when they were in the room."
+  },
+  {
+   "post": "tutorial-6-double-dose",
+   "field": "child_action",
+   "ruling": "When a carer causes the event (e.g. a dosing error), child_action is not_stated; the carer's action goes in supervisor_activity and mechanism_detail."
+  },
+  {
+   "post": "tutorial-6-double-dose",
+   "field": "activity_when_injured",
+   "ruling": "Being given medicine is supervised_activity_or_care, inferred."
+  },
+  {
+   "post": "tutorial-7-bath",
+   "field": "help_seeking",
+   "ruling": "Asking the forum for help with the incident, and saying no one else was contacted, is forum_advice_only (stated). Contrast ruling 1."
+  },
+  {
+   "post": "tutorial-7-bath",
+   "field": "mechanism_iceci",
+   "ruling": "A slip that leads to submersion is drowning_or_submersion, not a fall: the mechanism is the energy that reached the child."
+  },
+  {
+   "post": "tutorial-5-rental",
+   "field": "all event fields",
+   "ruling": "Where there is no incident, the event fields are not_stated even when the post names hazards or new skills."
+  }
+ ],
+ "posts": [
+  {
+   "id": "tutorial-0-tv",
+   "order": 0,
+   "label": "Warm-up: the study guide's worked example",
+   "title": "18mo pulled the TV over, feeling sick about it",
+   "selftext": "She's been climbing everything since she worked out how to get onto the couch a couple of weeks ago. I was putting the washing on and heard an almighty crash. Came in and the TV was on the floor and she was screaming underneath the edge of it. Massive bruise coming up on her shoulder but she was moving everything fine. Took her to the GP who checked her over and said to watch for vomiting. The TV was just sitting on the drawers, never occurred to me to strap it. Ordered anchors that night.",
+   "takeaways": [
+    "Earshot is not supervision: in another room with no checking described is no_supervision.",
+    "Code the energy transfer to the child. The TV fell, the child did not, so the fall fields stay empty.",
+    "Regret about an omission ('never occurred to me to strap it') is an inferred counterfactual, not a stated one.",
+    "Don't fill first_response from the GP visit; that belongs in help_seeking and care_pathway_outcome."
+   ],
+   "key": {
+    "activity_when_injured": {
+     "value": "climbing",
+     "status": "inferred",
+     "evidence_span": "She's been climbing everything",
+     "why": "She has been climbing everything lately, and the TV came down from the drawers, so climbing is the reasonable reading. The post never says she was climbing at that moment, so inferred."
+    },
+    "developmental_trigger": {
+     "value": "newly_climbing",
+     "status": "stated",
+     "evidence_span": "since she worked out how to get onto the couch a couple of weeks ago",
+     "why": "A skill gained two weeks ago, tied to the climbing that led to the event. Recent and linked, so it counts."
+    },
+    "object_involved": {
+     "value": "television on chest of drawers",
+     "status": "stated",
+     "evidence_span": "The TV was just sitting on the drawers",
+     "why": "Name the product and where it stood; the setting is part of the hazard."
+    },
+    "object_category": {
+     "value": "household_appliance",
+     "status": "stated",
+     "evidence_span": "the TV was on the floor",
+     "why": "A television is a household appliance; the category follows the object."
+    },
+    "place_of_occurrence": {
+     "value": "home_indoor",
+     "status": "inferred",
+     "evidence_span": "I was putting the washing on",
+     "why": "Doing the washing and 'came in' place it at home, indoors, without saying so."
+    },
+    "micro_location": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No room is named. Don't guess the lounge."
+    },
+    "hazard_state": {
+     "value": "television unsecured on drawers",
+     "status": "stated",
+     "evidence_span": "never occurred to me to strap it",
+     "why": "Record the modifiable condition (not strapped), not the event (TV fell)."
+    },
+    "supervision_status": {
+     "value": "no_supervision",
+     "status": "inferred",
+     "evidence_span": "I was putting the washing on and heard an almighty crash. Came in",
+     "why": "The caregiver was in another room ('Came in') and no checking is described. Hearing the crash doesn't make it proximate; proximate needs the same room or within reach."
+    },
+    "supervisor_activity": {
+     "value": "putting the washing on",
+     "status": "stated",
+     "evidence_span": "I was putting the washing on",
+     "why": "Said in so many words."
+    },
+    "others_present": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Nobody else is mentioned. Don't conclude from silence that she was alone."
+    },
+    "child_action": {
+     "value": "pulled the television over",
+     "status": "stated",
+     "evidence_span": "18mo pulled the TV over",
+     "why": "The title says it; titles count as part of the post."
+    },
+    "mechanism_iceci": {
+     "value": "blunt_force_struck_by",
+     "status": "inferred",
+     "evidence_span": "she was screaming underneath the edge of it",
+     "why": "The falling TV struck her. The mechanism is the energy transfer to the child, not the object's motion."
+    },
+    "mechanism_detail": {
+     "value": "television toppled from drawers onto child",
+     "status": "inferred",
+     "evidence_span": "the TV was on the floor and she was screaming underneath the edge of it",
+     "why": "The sequence is reconstructed from what was found, so inferred."
+    },
+    "fall_height": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "landing_surface": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "witnessed": {
+     "value": "heard_not_seen",
+     "status": "stated",
+     "evidence_span": "heard an almighty crash. Came in",
+     "why": "Heard the crash, then came in: heard, not seen."
+    },
+    "presenting_signs": {
+     "value": "bruise to shoulder, moving limbs normally",
+     "status": "stated",
+     "evidence_span": "Massive bruise coming up on her shoulder but she was moving everything fine",
+     "why": "Record what was observed, including reassuring signs."
+    },
+    "first_response": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "The post goes from discovery straight to the GP. Don't fill this from the visit."
+    },
+    "help_seeking": {
+     "value": [
+      "general_practitioner"
+     ],
+     "status": "stated",
+     "evidence_span": "Took her to the GP",
+     "why": "One source of help, stated."
+    },
+    "care_pathway_outcome": {
+     "value": "primary_care_visit",
+     "status": "stated",
+     "evidence_span": "Took her to the GP who checked her over",
+     "why": "A GP visit is the highest level of care reached."
+    },
+    "parent_attributed_cause": {
+     "value": "television was not secured",
+     "status": "stated",
+     "evidence_span": "never occurred to me to strap it",
+     "why": "The poster's own framing of the cause."
+    },
+    "stated_counterfactual": {
+     "value": "securing the television would have prevented it",
+     "status": "inferred",
+     "evidence_span": "never occurred to me to strap it",
+     "why": "Regret about an omission. It stops short of saying strapping would have prevented it, so inferred."
+    },
+    "countermeasure_adopted": {
+     "value": "anchors ordered",
+     "status": "stated",
+     "evidence_span": "Ordered anchors that night",
+     "why": "A concrete change to prevent a recurrence."
+    },
+    "reason_for_posting": {
+     "value": "expressing_guilt_or_distress",
+     "status": "inferred",
+     "evidence_span": "feeling sick about it",
+     "why": "No question is asked. The title's distress is the clearest purpose."
+    },
+    "injury_event_check": {
+     "value": "actual_injury_event",
+     "status": "stated",
+     "evidence_span": "Massive bruise coming up on her shoulder",
+     "why": "The incident and the harm are both described."
+    }
+   }
+  },
+  {
+   "id": "tutorial-1-stairs",
+   "order": 1,
+   "label": "Near miss",
+   "title": "Caught her on the stairs and I'm still shaking",
+   "selftext": "DD is 13 months, just started walking and is obsessed with the stairs, so every night she climbs up to bed with me right behind her, watching every step. Tonight she let go of my hand to grab the rail, lost her footing and toppled backwards. I caught her under the arms before she hit the step below. Not a mark on her and she was giggling a minute later, so I didn't call anyone.\n\nOur stairs are carpeted but the bottom is tiles and I keep picturing what would have happened if I'd been a step further back. How do you all do stairs at this age? Gate at the bottom, top or both? We're putting gates in this weekend.",
+   "takeaways": [
+    "A real hazardous incident, stopped before the hazard reached the child, is near_miss. Code every other field as usual.",
+    "A passing mention of a new skill ('just started walking') isn't a developmental trigger unless the post links it to how the event happened.",
+    "Code what happened, not what nearly happened: she was caught before hitting anything, so there is no fall height and no landing surface.",
+    "Picturing a worse outcome isn't a counterfactual. A planned gate is a countermeasure, not evidence of the hazard state."
+   ],
+   "key": {
+    "activity_when_injured": {
+     "value": "climbing",
+     "status": "stated",
+     "evidence_span": "she climbs up to bed with me right behind her",
+     "why": "Climbing the stairs to bed, as she does every night."
+    },
+    "developmental_trigger": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "'Just started walking' is mentioned, but the post doesn't connect it to the fall: she let go to grab the rail. Passing mentions aren't triggers."
+    },
+    "object_involved": {
+     "value": "stairs",
+     "status": "stated",
+     "evidence_span": "Caught her on the stairs",
+     "why": "The stairs are the object involved. The title counts as part of the post."
+    },
+    "object_category": {
+     "value": "stairs_or_steps",
+     "status": "stated",
+     "evidence_span": "Caught her on the stairs",
+     "why": "Follows the object."
+    },
+    "place_of_occurrence": {
+     "value": "home_indoor",
+     "status": "inferred",
+     "evidence_span": "Our stairs are carpeted",
+     "why": "'Our stairs' and bedtime place it at home, without saying so."
+    },
+    "micro_location": {
+     "value": "stairs",
+     "status": "stated",
+     "evidence_span": "she climbs up to bed with me right behind her",
+     "why": "The spot within the home."
+    },
+    "hazard_state": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Nothing describes a condition that made the stairs hazardous at the time. The planned gates say what will change, not what the hazard was. Don't infer the hazard backwards from a countermeasure."
+    },
+    "supervision_status": {
+     "value": "direct_supervision",
+     "status": "stated",
+     "evidence_span": "with me right behind her, watching every step",
+     "why": "Watching and within reach, said outright."
+    },
+    "supervisor_activity": {
+     "value": "following her up the stairs, watching",
+     "status": "stated",
+     "evidence_span": "with me right behind her, watching every step",
+     "why": "What the caregiver was doing at the moment."
+    },
+    "others_present": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Nobody else is mentioned."
+    },
+    "child_action": {
+     "value": "let go of parent's hand to grab the rail and lost her footing",
+     "status": "stated",
+     "evidence_span": "she let go of my hand to grab the rail, lost her footing",
+     "why": "What the child did that led to the event."
+    },
+    "mechanism_iceci": {
+     "value": "fall_down_stairs",
+     "status": "inferred",
+     "evidence_span": "lost her footing and toppled backwards",
+     "why": "A fall began on the stairs and was stopped. Use the fall subtype of what was happening, not unspecified. Inferred, because the post never says 'fell down the stairs'."
+    },
+    "mechanism_detail": {
+     "value": "lost footing climbing up, toppled backwards, caught under the arms before hitting the step below",
+     "status": "stated",
+     "evidence_span": "lost her footing and toppled backwards. I caught her under the arms before she hit the step below",
+     "why": "The sequence, including how it ended."
+    },
+    "fall_height": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "She was caught before she dropped onto anything, so no height fallen is described."
+    },
+    "landing_surface": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "She was caught before she landed. The carpet and tiles describe the stairs, not where she landed."
+    },
+    "witnessed": {
+     "value": "directly_witnessed",
+     "status": "stated",
+     "evidence_span": "watching every step",
+     "why": "The poster was watching when it happened."
+    },
+    "presenting_signs": {
+     "value": "no marks, giggling a minute later",
+     "status": "stated",
+     "evidence_span": "Not a mark on her and she was giggling a minute later",
+     "why": "Signs observed afterwards, including the absence of injury."
+    },
+    "first_response": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Catching her is part of the event (mechanism_detail). Nothing is described afterwards."
+    },
+    "help_seeking": {
+     "value": [
+      "none"
+     ],
+     "status": "stated",
+     "evidence_span": "so I didn't call anyone",
+     "why": "The post says no help was sought. The question to the forum is about prevention, not help for this incident, so it isn't forum_advice_only."
+    },
+    "care_pathway_outcome": {
+     "value": "no_care_sought",
+     "status": "stated",
+     "evidence_span": "so I didn't call anyone",
+     "why": "Stated plainly."
+    },
+    "parent_attributed_cause": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "The post describes what happened but doesn't say what caused it."
+    },
+    "stated_counterfactual": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "'I keep picturing what would have happened if I'd been a step further back' imagines a worse outcome. It doesn't say what would have prevented this one."
+    },
+    "countermeasure_adopted": {
+     "value": "installing stair gates",
+     "status": "stated",
+     "evidence_span": "We're putting gates in this weekend",
+     "why": "A change the poster says they will make."
+    },
+    "reason_for_posting": {
+     "value": "seeking_prevention_advice",
+     "status": "stated",
+     "evidence_span": "How do you all do stairs at this age? Gate at the bottom, top or both?",
+     "why": "The post asks the question outright."
+    },
+    "injury_event_check": {
+     "value": "near_miss",
+     "status": "stated",
+     "evidence_span": "Not a mark on her",
+     "why": "A real fall, stopped before she hit anything, and the post says there was no injury. Had she tumbled down the steps and been fine, the hazard would have reached her: actual_injury_event, even with no marks."
+    }
+   }
+  },
+  {
+   "id": "tutorial-2-change-table",
+   "order": 2,
+   "label": "Fall supervised by another adult",
+   "title": "4mo rolled off the change table at my mum's",
+   "selftext": "My mum was changing LO on the change table in her spare room while I was out getting groceries. LO only started rolling last week and mum didn't know, so when she turned to grab a nappy from the drawer LO rolled straight off. It's about a metre high and she landed on the tiles.\n\nMum rang me straight away. She said LO cried immediately and there was a red mark on the side of her head. I called Healthdirect and the nurse told us to go to emergency. They watched her for four hours, she fed well and wasn't sleepy, and we were sent home with a head injury sheet.\n\nMum feels terrible and so do I. I should have told her about the rolling. Has anyone else had this happen? Please tell me she'll be ok.",
+   "takeaways": [
+    "When an adult other than the poster was responsible, supervision_status is supervised_by_other_adult. How closely they were watching goes in supervisor_activity.",
+    "help_seeking takes every source (nurse line and emergency department); care_pathway_outcome takes only the highest point reached.",
+    "A new skill the post ties to the event ('only started rolling last week and mum didn't know') is a developmental trigger.",
+    "The poster wasn't there: witnessed_by_other."
+   ],
+   "key": {
+    "activity_when_injured": {
+     "value": "nappy_change_or_dressing",
+     "status": "stated",
+     "evidence_span": "My mum was changing LO on the change table",
+     "why": "Being changed when it happened."
+    },
+    "developmental_trigger": {
+     "value": "newly_rolling",
+     "status": "stated",
+     "evidence_span": "LO only started rolling last week",
+     "why": "A recent skill, and the post links it to the event: grandma didn't know she could roll."
+    },
+    "object_involved": {
+     "value": "change table",
+     "status": "stated",
+     "evidence_span": "rolled off the change table",
+     "why": "The title counts as part of the post."
+    },
+    "object_category": {
+     "value": "furniture",
+     "status": "stated",
+     "evidence_span": "rolled off the change table",
+     "why": "A change table is furniture. pram_cot_or_highchair is for prams, cots and highchairs."
+    },
+    "place_of_occurrence": {
+     "value": "other_residence",
+     "status": "stated",
+     "evidence_span": "at my mum's",
+     "why": "Someone else's home, not the child's own."
+    },
+    "micro_location": {
+     "value": "spare room",
+     "status": "stated",
+     "evidence_span": "on the change table in her spare room",
+     "why": "The room is the micro location; the table is the object."
+    },
+    "hazard_state": {
+     "value": "baby left on a raised change table without a hand on her",
+     "status": "inferred",
+     "evidence_span": "when she turned to grab a nappy from the drawer LO rolled straight off",
+     "why": "The modifiable condition is the unrestrained baby on a raised surface. The post implies it without naming it."
+    },
+    "supervision_status": {
+     "value": "supervised_by_other_adult",
+     "status": "stated",
+     "evidence_span": "My mum was changing LO on the change table in her spare room while I was out getting groceries",
+     "why": "Grandma was responsible and the poster was out. That grandma turned away is recorded in supervisor_activity."
+    },
+    "supervisor_activity": {
+     "value": "turned to grab a nappy from the drawer",
+     "status": "stated",
+     "evidence_span": "she turned to grab a nappy from the drawer",
+     "why": "What the responsible adult was doing at the moment."
+    },
+    "others_present": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Only grandma and the baby are described. Don't conclude nobody else was in the house."
+    },
+    "child_action": {
+     "value": "rolled off the change table",
+     "status": "stated",
+     "evidence_span": "LO rolled straight off",
+     "why": "What the child did."
+    },
+    "mechanism_iceci": {
+     "value": "fall_from_furniture",
+     "status": "stated",
+     "evidence_span": "rolled off the change table",
+     "why": "A fall from furniture. Not fall_from_height: use the most specific fall subtype the post supports."
+    },
+    "mechanism_detail": {
+     "value": "rolled off a change table about a metre high onto tiles while her grandmother turned away",
+     "status": "stated",
+     "evidence_span": "when she turned to grab a nappy from the drawer LO rolled straight off. It's about a metre high and she landed on the tiles",
+     "why": "The whole sequence, in one continuous quote."
+    },
+    "fall_height": {
+     "value": "about a metre",
+     "status": "stated",
+     "evidence_span": "It's about a metre high",
+     "why": "As described."
+    },
+    "landing_surface": {
+     "value": "tiles",
+     "status": "stated",
+     "evidence_span": "she landed on the tiles",
+     "why": "As described."
+    },
+    "witnessed": {
+     "value": "witnessed_by_other",
+     "status": "inferred",
+     "evidence_span": "My mum was changing LO on the change table in her spare room while I was out getting groceries",
+     "why": "The poster was out and grandma was there. The post never says grandma saw the roll itself, so inferred."
+    },
+    "presenting_signs": {
+     "value": "cried immediately, red mark on side of head",
+     "status": "stated",
+     "evidence_span": "She said LO cried immediately and there was a red mark on the side of her head",
+     "why": "Signs reported straight afterwards. Signs reported second-hand still count."
+    },
+    "first_response": {
+     "value": "grandmother phoned the parent straight away",
+     "status": "stated",
+     "evidence_span": "Mum rang me straight away",
+     "why": "The first thing done after the fall."
+    },
+    "help_seeking": {
+     "value": [
+      "nurse_helpline",
+      "emergency_department"
+     ],
+     "status": "stated",
+     "evidence_span": "I called Healthdirect and the nurse told us to go to emergency",
+     "why": "Healthdirect is a nurse helpline. Record both sources."
+    },
+    "care_pathway_outcome": {
+     "value": "ed_presentation_discharged",
+     "status": "stated",
+     "evidence_span": "we were sent home with a head injury sheet",
+     "why": "Seen in emergency and sent home: the highest point reached."
+    },
+    "parent_attributed_cause": {
+     "value": "grandmother didn't know the baby had started rolling",
+     "status": "stated",
+     "evidence_span": "LO only started rolling last week and mum didn't know",
+     "why": "The poster's framing of the cause."
+    },
+    "stated_counterfactual": {
+     "value": "telling her mother about the rolling",
+     "status": "stated",
+     "evidence_span": "I should have told her about the rolling",
+     "why": "Says outright what the poster wishes they had done."
+    },
+    "countermeasure_adopted": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No change is described."
+    },
+    "reason_for_posting": {
+     "value": "seeking_reassurance",
+     "status": "inferred",
+     "evidence_span": "Please tell me she'll be ok",
+     "why": "The closing plea shows the purpose. The poster isn't asking whether to seek care, which they already have."
+    },
+    "injury_event_check": {
+     "value": "actual_injury_event",
+     "status": "stated",
+     "evidence_span": "there was a red mark on the side of her head",
+     "why": "The fall and the harm are both described."
+    }
+   }
+  },
+  {
+   "id": "tutorial-3-medicine",
+   "order": 3,
+   "label": "Suspected ingestion, found after the event",
+   "title": "Found my 2yo with an open bottle of children's Panadol",
+   "selftext": "I jumped in the shower for five minutes while DS (2.5) watched Bluey in the lounge. When I came out he was sitting on the kitchen floor with the bottle of children's Panadol, lid off and sticky all round his mouth. I'd left it on the bench after giving his sister a dose and obviously didn't click the lid back on properly. He must have climbed the stool to reach it. No idea if he drank any or just played with it.\n\nI rang the Poisons line straight away. They said to keep him home and watch him for the next few hours, and to ring back or take him to emergency if he vomits, gets drowsy or goes pale. So far he's running around like normal.\n\nI feel like the worst mum. The medicine now lives in a locked box up high.",
+   "takeaways": [
+    "A possible ingestion where harm may still occur is suspected_injury_event.",
+    "Found after the event: what the parent pieces together ('He must have climbed the stool') is inferred, and you add no reconstruction of your own.",
+    "A sibling mentioned in passing isn't sibling_present. others_present needs the post to place them there at the time.",
+    "Where the child was found is an inferred location, not a stated one."
+   ],
+   "key": {
+    "activity_when_injured": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "He was watching TV earlier, but nobody knows what he was doing when he got the bottle."
+    },
+    "developmental_trigger": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Climbing the stool is a guess about this event, not a newly acquired skill linked to it."
+    },
+    "object_involved": {
+     "value": "children's paracetamol liquid (Panadol)",
+     "status": "stated",
+     "evidence_span": "the bottle of children's Panadol",
+     "why": "The product, named."
+    },
+    "object_category": {
+     "value": "medicine_or_supplement",
+     "status": "stated",
+     "evidence_span": "the bottle of children's Panadol",
+     "why": "Follows the object."
+    },
+    "place_of_occurrence": {
+     "value": "home_indoor",
+     "status": "inferred",
+     "evidence_span": "I jumped in the shower for five minutes while DS (2.5) watched Bluey in the lounge",
+     "why": "Shower, lounge and kitchen place it at home, without saying so."
+    },
+    "micro_location": {
+     "value": "kitchen",
+     "status": "inferred",
+     "evidence_span": "he was sitting on the kitchen floor",
+     "why": "He was found in the kitchen, with the bottle from the kitchen bench. Where a child is found isn't necessarily where it happened, so inferred."
+    },
+    "hazard_state": {
+     "value": "medicine left on the bench with the lid not secured",
+     "status": "stated",
+     "evidence_span": "I'd left it on the bench after giving his sister a dose and obviously didn't click the lid back on properly",
+     "why": "The modifiable condition, in her words."
+    },
+    "supervision_status": {
+     "value": "no_supervision",
+     "status": "inferred",
+     "evidence_span": "I jumped in the shower for five minutes",
+     "why": "The caregiver was in another room with no checking described. Five minutes is short, but short is not intermittent."
+    },
+    "supervisor_activity": {
+     "value": "showering",
+     "status": "stated",
+     "evidence_span": "I jumped in the shower for five minutes",
+     "why": "Said in so many words."
+    },
+    "others_present": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "His sister is mentioned only as getting a dose earlier. The post doesn't place her there at the time."
+    },
+    "child_action": {
+     "value": "probably climbed the stool to reach the bottle on the bench",
+     "status": "inferred",
+     "evidence_span": "He must have climbed the stool to reach it",
+     "why": "This is the parent's reconstruction, given as a guess ('must have'). Record it as inferred and add nothing of your own."
+    },
+    "mechanism_iceci": {
+     "value": "medicine_ingestion",
+     "status": "inferred",
+     "evidence_span": "lid off and sticky all round his mouth",
+     "why": "Swallowing isn't confirmed, but the sticky mouth carries the inference. A medicine, not a household chemical."
+    },
+    "mechanism_detail": {
+     "value": "possible swallowing of liquid paracetamol from a bottle with the lid not secured; amount unknown",
+     "status": "inferred",
+     "evidence_span": "No idea if he drank any or just played with it",
+     "why": "Keep the uncertainty in the value."
+    },
+    "fall_height": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "landing_surface": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "witnessed": {
+     "value": "found_after_event",
+     "status": "stated",
+     "evidence_span": "When I came out he was sitting on the kitchen floor",
+     "why": "Discovered afterwards."
+    },
+    "presenting_signs": {
+     "value": "sticky around the mouth",
+     "status": "stated",
+     "evidence_span": "lid off and sticky all round his mouth",
+     "why": "What was observed. 'Running around like normal' could be added; leaving it out is not an error."
+    },
+    "first_response": {
+     "value": "rang the Poisons Information Centre",
+     "status": "stated",
+     "evidence_span": "I rang the Poisons line straight away",
+     "why": "The first action taken."
+    },
+    "help_seeking": {
+     "value": [
+      "poisons_information_centre"
+     ],
+     "status": "stated",
+     "evidence_span": "I rang the Poisons line straight away",
+     "why": "The only source of help."
+    },
+    "care_pathway_outcome": {
+     "value": "advice_only_no_visit",
+     "status": "stated",
+     "evidence_span": "They said to keep him home and watch him for the next few hours",
+     "why": "Phone advice only. 'Take him to emergency if...' is a contingency that hadn't happened."
+    },
+    "parent_attributed_cause": {
+     "value": "lid not clicked back on after giving a dose",
+     "status": "stated",
+     "evidence_span": "obviously didn't click the lid back on properly",
+     "why": "Her framing of the cause."
+    },
+    "stated_counterfactual": {
+     "value": "securing the lid would have prevented it",
+     "status": "inferred",
+     "evidence_span": "obviously didn't click the lid back on properly",
+     "why": "Same pattern as the TV example: an admitted omission, with no statement that doing otherwise would have prevented it."
+    },
+    "countermeasure_adopted": {
+     "value": "medicine stored in a locked box up high",
+     "status": "stated",
+     "evidence_span": "The medicine now lives in a locked box up high",
+     "why": "A change made."
+    },
+    "reason_for_posting": {
+     "value": "expressing_guilt_or_distress",
+     "status": "inferred",
+     "evidence_span": "I feel like the worst mum",
+     "why": "No question is asked, and the distress carries the purpose."
+    },
+    "injury_event_check": {
+     "value": "suspected_injury_event",
+     "status": "inferred",
+     "evidence_span": "No idea if he drank any or just played with it",
+     "why": "A real exposure where harm is possible and still being watched for. That makes it suspected_injury_event, not near_miss. Inferred, because the judgement rests on the post as a whole."
+    }
+   }
+  },
+  {
+   "id": "tutorial-4-scald",
+   "order": 4,
+   "label": "Scald, caregiver in the same room",
+   "title": "Coffee burn on 11mo's arm - push your mugs back",
+   "selftext": "Making my coffee this morning with LO on the kitchen floor next to me. I turned to get the milk out of the fridge and she pulled herself up on the cupboard and grabbed the mug off the edge of the bench. It went down her arm.\n\nI held it under cool running water for 20 minutes like they taught us at first aid, then took her to the GP, who dressed it and referred us to the burns clinic at the children's hospital. Blistered patch about the size of a 50c coin on her forearm. Appointment is Thursday.\n\nI knew she could reach the bench now, I should have pushed it to the back. Mugs live at the back of the bench from now on. Posting so someone else pushes theirs back today.",
+   "takeaways": [
+    "Same room, turned away for a moment: proximate_supervision, inferred.",
+    "Treating the burn (cool water) is first_response. Moving the mugs is countermeasure_adopted.",
+    "A counterfactual is stated when the post says what would have prevented it ('I should have pushed it to the back').",
+    "Don't assume she saw it happen. If the post doesn't say, witnessed is not_stated."
+   ],
+   "key": {
+    "activity_when_injured": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "She was on the kitchen floor, but the post doesn't say what she was doing before she pulled herself up. Pulling up is child_action."
+    },
+    "developmental_trigger": {
+     "value": "newly_pulling_to_stand",
+     "status": "inferred",
+     "evidence_span": "I knew she could reach the bench now",
+     "why": "'Now' marks a new ability, and the post ties it to the event. The linking is implied, not said, so inferred."
+    },
+    "object_involved": {
+     "value": "mug of hot coffee",
+     "status": "stated",
+     "evidence_span": "grabbed the mug off the edge of the bench",
+     "why": "Name the object together with the hazard it carried."
+    },
+    "object_category": {
+     "value": "hot_liquid_or_food",
+     "status": "stated",
+     "evidence_span": "Coffee burn on 11mo's arm",
+     "why": "The hot drink is what harmed her, not the mug, so hot liquid rather than tableware."
+    },
+    "place_of_occurrence": {
+     "value": "home_indoor",
+     "status": "inferred",
+     "evidence_span": "Making my coffee this morning with LO on the kitchen floor next to me",
+     "why": "Clearly the family kitchen at home, without saying so."
+    },
+    "micro_location": {
+     "value": "kitchen",
+     "status": "stated",
+     "evidence_span": "LO on the kitchen floor next to me",
+     "why": "Named."
+    },
+    "hazard_state": {
+     "value": "hot coffee mug at the edge of the bench",
+     "status": "stated",
+     "evidence_span": "grabbed the mug off the edge of the bench",
+     "why": "Record the state, not the event."
+    },
+    "supervision_status": {
+     "value": "proximate_supervision",
+     "status": "inferred",
+     "evidence_span": "I turned to get the milk out of the fridge",
+     "why": "In the same room and briefly turned away: the textbook proximate case."
+    },
+    "supervisor_activity": {
+     "value": "getting milk from the fridge while making coffee",
+     "status": "stated",
+     "evidence_span": "I turned to get the milk out of the fridge",
+     "why": "Said in so many words."
+    },
+    "others_present": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Nobody else is mentioned."
+    },
+    "child_action": {
+     "value": "pulled herself up on the cupboard and grabbed the mug off the bench",
+     "status": "stated",
+     "evidence_span": "she pulled herself up on the cupboard and grabbed the mug off the edge of the bench",
+     "why": "What the child did."
+    },
+    "mechanism_iceci": {
+     "value": "thermal_scald_liquid",
+     "status": "stated",
+     "evidence_span": "grabbed the mug off the edge of the bench. It went down her arm",
+     "why": "Hot liquid on skin is a scald. Not thermal_heat_contact, which is for hot surfaces."
+    },
+    "mechanism_detail": {
+     "value": "pulled a mug of hot coffee off the bench edge; coffee spilled down her arm",
+     "status": "stated",
+     "evidence_span": "grabbed the mug off the edge of the bench. It went down her arm",
+     "why": "The sequence."
+    },
+    "fall_height": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "landing_surface": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "witnessed": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "The caregiver turned to the fridge. The post doesn't say whether they saw the grab or turned back to it. Don't assume either way."
+    },
+    "presenting_signs": {
+     "value": "blistered patch about the size of a 50c coin on her forearm",
+     "status": "stated",
+     "evidence_span": "Blistered patch about the size of a 50c coin on her forearm",
+     "why": "As described."
+    },
+    "first_response": {
+     "value": "held under cool running water for 20 minutes",
+     "status": "stated",
+     "evidence_span": "I held it under cool running water for 20 minutes",
+     "why": "Immediate treatment is first_response, never countermeasure."
+    },
+    "help_seeking": {
+     "value": [
+      "general_practitioner"
+     ],
+     "status": "stated",
+     "evidence_span": "took her to the GP",
+     "why": "Sought so far: the GP. The burns clinic is a referral, and that appointment hasn't happened yet."
+    },
+    "care_pathway_outcome": {
+     "value": "specialist_referral",
+     "status": "stated",
+     "evidence_span": "referred us to the burns clinic at the children's hospital",
+     "why": "The GP referred her on, which is beyond a primary care visit. Use specialist_referral even though the appointment is still to come."
+    },
+    "parent_attributed_cause": {
+     "value": "mug left within her reach although the parent knew she could now reach the bench",
+     "status": "stated",
+     "evidence_span": "I knew she could reach the bench now, I should have pushed it to the back",
+     "why": "The poster's own framing: their lapse, not the child."
+    },
+    "stated_counterfactual": {
+     "value": "pushing the mug to the back of the bench",
+     "status": "stated",
+     "evidence_span": "I should have pushed it to the back",
+     "why": "Says outright what would have prevented it."
+    },
+    "countermeasure_adopted": {
+     "value": "mugs kept at the back of the bench",
+     "status": "stated",
+     "evidence_span": "Mugs live at the back of the bench from now on",
+     "why": "A change made."
+    },
+    "reason_for_posting": {
+     "value": "warning_others",
+     "status": "stated",
+     "evidence_span": "Posting so someone else pushes theirs back today",
+     "why": "The post states its purpose."
+    },
+    "injury_event_check": {
+     "value": "actual_injury_event",
+     "status": "stated",
+     "evidence_span": "Blistered patch about the size of a 50c coin on her forearm",
+     "why": "The incident and the harm are both described."
+    }
+   }
+  },
+  {
+   "id": "tutorial-5-rental",
+   "order": 5,
+   "label": "Not an injury event",
+   "title": "Anchoring furniture when you rent?",
+   "selftext": "Our 14mo has started pulling up on everything and I've just realised nothing in his room is anchored, the bookshelf and the dresser included. Nothing has happened, but I've read enough posts here to be nervous. We rent and the landlord has said no drilling into the walls. What do people do to secure furniture when you can't drill?",
+   "takeaways": [
+    "No incident happened, so injury_event_check is not_an_injury_event. It is never not_stated.",
+    "The event fields describe an incident. With no incident they are not_stated, even though the post names hazards (unanchored furniture) and a new skill.",
+    "reason_for_posting is still coded: every post has a purpose."
+   ],
+   "key": {
+    "activity_when_injured": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "object_involved": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "object_category": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "place_of_occurrence": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "micro_location": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "supervision_status": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "supervisor_activity": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "others_present": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "child_action": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "mechanism_iceci": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "mechanism_detail": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "witnessed": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "presenting_signs": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "first_response": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "help_seeking": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "care_pathway_outcome": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "parent_attributed_cause": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "stated_counterfactual": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "countermeasure_adopted": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No incident happened, so there is no event for this field to describe."
+    },
+    "developmental_trigger": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "'Started pulling up on everything' is a new skill, but no event is linked to it."
+    },
+    "hazard_state": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "'Nothing in his room is anchored' is a hazard, but hazard_state is the condition at an injury, and there wasn't one."
+    },
+    "fall_height": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "landing_surface": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "reason_for_posting": {
+     "value": "seeking_prevention_advice",
+     "status": "stated",
+     "evidence_span": "What do people do to secure furniture when you can't drill?",
+     "why": "The post asks for prevention advice outright."
+    },
+    "injury_event_check": {
+     "value": "not_an_injury_event",
+     "status": "stated",
+     "evidence_span": "Nothing has happened",
+     "why": "The post says no incident occurred. Reading other people's posts is not an incident to this child."
+    }
+   }
+  },
+  {
+   "id": "tutorial-6-double-dose",
+   "order": 6,
+   "label": "Excess dose, no symptoms",
+   "title": "Accidentally gave my 3yo a second dose of Nurofen",
+   "selftext": "DD (3) has had a fever since yesterday. My partner gave her 7.5ml of children's Nurofen at 9pm while I was in the shower and didn't tell me. When she woke up crying at 9:30 I sat with her on my lap and gave her another 7.5ml. We only worked it out when I went to write it on the chart on the fridge.\n\nRang the Poisons line and they said one extra dose that size is unlikely to cause problems and we didn't need to go in, just give her plenty to drink and nothing more until the morning. She's asleep now and seems completely fine.\n\nFeeling like an idiot. From now on every dose goes on the chart before it's given. Does this happen to everyone?",
+   "takeaways": [
+    "A stated excess dose is actual_injury_event, even with no symptoms and reassuring advice. The medicine reached the child; how she is afterwards goes in presenting_signs.",
+    "A caregiver's dosing error is coded like any other event: supervision, witnessed and child_action describe what happened to the child.",
+    "The child did nothing to cause it, so child_action is not_stated. Don't move the caregiver's action into it.",
+    "If the post had only said 'I might have given her two doses', it would be suspected_injury_event."
+   ],
+   "key": {
+    "activity_when_injured": {
+     "value": "supervised_activity_or_care",
+     "status": "inferred",
+     "evidence_span": "I sat with her on my lap and gave her another 7.5ml",
+     "why": "Being given medicine by a carer is care. No value names it more closely, so inferred."
+    },
+    "developmental_trigger": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Nothing about a new skill. The child played no part in the event."
+    },
+    "object_involved": {
+     "value": "children's ibuprofen liquid (Nurofen)",
+     "status": "stated",
+     "evidence_span": "7.5ml of children's Nurofen",
+     "why": "The product, named."
+    },
+    "object_category": {
+     "value": "medicine_or_supplement",
+     "status": "stated",
+     "evidence_span": "7.5ml of children's Nurofen",
+     "why": "Follows the object."
+    },
+    "place_of_occurrence": {
+     "value": "home_indoor",
+     "status": "inferred",
+     "evidence_span": "We only worked it out when I went to write it on the chart on the fridge",
+     "why": "Shower, fridge and bedtime place it at home, without saying so."
+    },
+    "micro_location": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No room is named. Waking up crying doesn't say where she was given the dose."
+    },
+    "hazard_state": {
+     "value": "doses not recorded before being given, so neither carer knew of the other's dose",
+     "status": "inferred",
+     "evidence_span": "My partner gave her 7.5ml of children's Nurofen at 9pm while I was in the shower and didn't tell me",
+     "why": "The modifiable condition is the missing shared record. The post implies it (the chart was written after dosing) without naming it."
+    },
+    "supervision_status": {
+     "value": "direct_supervision",
+     "status": "stated",
+     "evidence_span": "I sat with her on my lap and gave her another 7.5ml",
+     "why": "The event is the second dose, and the poster was holding her when they gave it."
+    },
+    "supervisor_activity": {
+     "value": "giving her a second dose of Nurofen",
+     "status": "stated",
+     "evidence_span": "I sat with her on my lap and gave her another 7.5ml",
+     "why": "What the caregiver was doing at the moment. Here it is the event itself."
+    },
+    "others_present": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "The partner gave the first dose, but the post doesn't place them in the room for the second."
+    },
+    "child_action": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "The child did nothing that led to the event; the dose was given to her. The caregiver's action is recorded in supervisor_activity and mechanism_detail."
+    },
+    "mechanism_iceci": {
+     "value": "medicine_ingestion",
+     "status": "stated",
+     "evidence_span": "gave her another 7.5ml",
+     "why": "Swallowing a medicine, including an excess dose given by a carer."
+    },
+    "mechanism_detail": {
+     "value": "given a second 7.5ml dose of ibuprofen half an hour after the first, because the carers did not know of each other's dose",
+     "status": "stated",
+     "evidence_span": "My partner gave her 7.5ml of children's Nurofen at 9pm while I was in the shower and didn't tell me. When she woke up crying at 9:30 I sat with her on my lap and gave her another 7.5ml",
+     "why": "The sequence, in one continuous quote."
+    },
+    "fall_height": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "landing_surface": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "witnessed": {
+     "value": "directly_witnessed",
+     "status": "stated",
+     "evidence_span": "I sat with her on my lap and gave her another 7.5ml",
+     "why": "The poster gave the dose themselves."
+    },
+    "presenting_signs": {
+     "value": "no symptoms, asleep and seems fine",
+     "status": "stated",
+     "evidence_span": "She's asleep now and seems completely fine",
+     "why": "Record what was observed, including the absence of symptoms."
+    },
+    "first_response": {
+     "value": "rang the Poisons Information Centre",
+     "status": "stated",
+     "evidence_span": "Rang the Poisons line",
+     "why": "The first action after finding out."
+    },
+    "help_seeking": {
+     "value": [
+      "poisons_information_centre"
+     ],
+     "status": "stated",
+     "evidence_span": "Rang the Poisons line",
+     "why": "The only source of help. The question to the forum asks for reassurance, not further help, and another source was used anyway."
+    },
+    "care_pathway_outcome": {
+     "value": "advice_only_no_visit",
+     "status": "stated",
+     "evidence_span": "we didn't need to go in",
+     "why": "Phone advice only."
+    },
+    "parent_attributed_cause": {
+     "value": "partner gave a dose without telling them",
+     "status": "stated",
+     "evidence_span": "My partner gave her 7.5ml of children's Nurofen at 9pm while I was in the shower and didn't tell me",
+     "why": "The poster's framing of the cause."
+    },
+    "stated_counterfactual": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "'Feeling like an idiot' is distress, not a statement of what would have prevented it. The new rule about the chart is a countermeasure."
+    },
+    "countermeasure_adopted": {
+     "value": "every dose recorded on the chart before it is given",
+     "status": "stated",
+     "evidence_span": "From now on every dose goes on the chart before it's given",
+     "why": "A change the poster says they will make."
+    },
+    "reason_for_posting": {
+     "value": "seeking_reassurance",
+     "status": "inferred",
+     "evidence_span": "Does this happen to everyone?",
+     "why": "Care has already been sought and the advice was reassuring. The closing question asks to hear it's common."
+    },
+    "injury_event_check": {
+     "value": "actual_injury_event",
+     "status": "stated",
+     "evidence_span": "When she woke up crying at 9:30 I sat with her on my lap and gave her another 7.5ml",
+     "why": "A stated excess dose: the medicine reached the child, so it is an injury event even though she has no symptoms. Stated, because the post describes the dose and says she seems fine."
+    }
+   }
+  },
+  {
+   "id": "tutorial-7-bath",
+   "order": 7,
+   "label": "Submersion near miss",
+   "title": "9mo slipped under in the bath for a second",
+   "selftext": "I was kneeling right next to the bath washing DS's hair when he leaned forward for his cup, slipped sideways and his face went under. I had him up straight away, honestly within a second. He didn't cough or splutter, just looked shocked and then went back to splashing.\n\nNow I keep reading about dry drowning. He's been completely normal all evening and I don't want to ring anyone over nothing, so asking here: do I need to wake him tonight to check his breathing?",
+   "takeaways": [
+    "Face under, a child who can't get out alone, lifted out at once with no coughing or distress: near_miss.",
+    "Had he come up coughing or spluttering, that is non-fatal drowning: actual_injury_event, however well he is afterwards.",
+    "Worry alone isn't suspicion. With no symptom, reading about 'dry drowning' doesn't make it suspected_injury_event.",
+    "The mechanism is the water at his airway, not the slip, so it's drowning_or_submersion and the fall fields are locked.",
+    "Asking the forum what to do about this incident, with no other help sought, is forum_advice_only. Compare the stairs post, where the question was about prevention."
+   ],
+   "key": {
+    "activity_when_injured": {
+     "value": "bathing_or_washing",
+     "status": "stated",
+     "evidence_span": "washing DS's hair",
+     "why": "Said in so many words."
+    },
+    "developmental_trigger": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Nothing about a new skill."
+    },
+    "object_involved": {
+     "value": "bath water",
+     "status": "stated",
+     "evidence_span": "his face went under",
+     "why": "The water is what reached him; the bath is where."
+    },
+    "object_category": {
+     "value": "tap_or_bath_water",
+     "status": "stated",
+     "evidence_span": "slipped under in the bath",
+     "why": "Bath water, not water_body_or_container (pools, buckets, ponds)."
+    },
+    "place_of_occurrence": {
+     "value": "home_indoor",
+     "status": "inferred",
+     "evidence_span": "kneeling right next to the bath",
+     "why": "A bath at bedtime places it at home, without saying so."
+    },
+    "micro_location": {
+     "value": "bath",
+     "status": "stated",
+     "evidence_span": "kneeling right next to the bath",
+     "why": "The spot within the home, as the stairs were in the stairs post."
+    },
+    "hazard_state": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "The water depth isn't given, and nothing else describes a condition that made the bath hazardous. Don't infer one from the outcome."
+    },
+    "supervision_status": {
+     "value": "direct_supervision",
+     "status": "stated",
+     "evidence_span": "I was kneeling right next to the bath washing DS's hair",
+     "why": "Within reach and attending to him."
+    },
+    "supervisor_activity": {
+     "value": "washing his hair",
+     "status": "stated",
+     "evidence_span": "washing DS's hair",
+     "why": "What the caregiver was doing at the moment."
+    },
+    "others_present": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Nobody else is mentioned."
+    },
+    "child_action": {
+     "value": "leaned forward for his cup and slipped sideways",
+     "status": "stated",
+     "evidence_span": "he leaned forward for his cup, slipped sideways",
+     "why": "What the child did."
+    },
+    "mechanism_iceci": {
+     "value": "drowning_or_submersion",
+     "status": "stated",
+     "evidence_span": "his face went under",
+     "why": "The energy is the water at his airway. The slip led to it, but isn't the mechanism."
+    },
+    "mechanism_detail": {
+     "value": "slipped sideways while seated in the bath; face under water for about a second before being lifted out",
+     "status": "stated",
+     "evidence_span": "slipped sideways and his face went under. I had him up straight away, honestly within a second",
+     "why": "The sequence, including how it ended."
+    },
+    "fall_height": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "landing_surface": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+    },
+    "witnessed": {
+     "value": "directly_witnessed",
+     "status": "inferred",
+     "evidence_span": "I was kneeling right next to the bath washing DS's hair",
+     "why": "Washing his hair when it happened, so the poster saw it. The post doesn't say 'I saw', so inferred."
+    },
+    "presenting_signs": {
+     "value": "no coughing or spluttering, looked shocked, back to normal",
+     "status": "stated",
+     "evidence_span": "He didn't cough or splutter, just looked shocked and then went back to splashing",
+     "why": "Record what was observed, including the absence of coughing: it is what makes this a near miss."
+    },
+    "first_response": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Lifting him out is part of the event (mechanism_detail). Nothing is described afterwards."
+    },
+    "help_seeking": {
+     "value": [
+      "forum_advice_only"
+     ],
+     "status": "stated",
+     "evidence_span": "I don't want to ring anyone over nothing, so asking here",
+     "why": "The poster asks the forum what to do about this incident and says no one else was contacted."
+    },
+    "care_pathway_outcome": {
+     "value": "no_care_sought",
+     "status": "stated",
+     "evidence_span": "I don't want to ring anyone over nothing",
+     "why": "No care sought, said outright."
+    },
+    "parent_attributed_cause": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "The post describes what happened but doesn't say what caused it."
+    },
+    "stated_counterfactual": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Nothing says what would have prevented it."
+    },
+    "countermeasure_adopted": {
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "No change is described."
+    },
+    "reason_for_posting": {
+     "value": "seeking_triage_advice",
+     "status": "stated",
+     "evidence_span": "do I need to wake him tonight to check his breathing?",
+     "why": "Asks whether action is needed for this child now."
+    },
+    "injury_event_check": {
+     "value": "near_miss",
+     "status": "stated",
+     "evidence_span": "He didn't cough or splutter, just looked shocked and then went back to splashing",
+     "why": "His face went under and he couldn't get out alone, but he was lifted out at once with no coughing or distress. The hazard was stopped before it did anything to him. The dry-drowning worry comes with no symptom, so it isn't suspected."
+    }
+   }
+  }
+ ]
+}

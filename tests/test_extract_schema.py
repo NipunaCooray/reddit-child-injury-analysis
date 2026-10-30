@@ -4,6 +4,7 @@ Acceptance tests for src/extract/schema.py (Phase 2 brief §12).
 Run:  python -m unittest tests/test_extract_schema.py   (or: pytest tests/)
 """
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -262,6 +263,43 @@ class TestSamplerBoost(unittest.TestCase):
         sizes = {"fall": 405, "choking_or_suffocation": 252, **{f"s{i}": 10 for i in range(11)}}
         alloc = allocate(sizes, 50, 4)
         self.assertEqual((alloc["fall"], alloc["choking_or_suffocation"], sum(alloc.values())), (3, 3, 50))
+
+    def test_exclude_reads_jsonl_manifest_and_id_list(self):
+        import tempfile
+        from sample_pilot import load_exclude_ids
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            (d / "pilot.jsonl").write_text('{"id": "a1"}\n{"id": "a2"}\n', encoding="utf-8")
+            (d / "pilot_manifest.json").write_text(json.dumps({"ids": ["b1"]}), encoding="utf-8")
+            (d / "practice.txt").write_text("c1\n\nc2\n", encoding="utf-8")
+            got = load_exclude_ids([d / "pilot.jsonl", d / "pilot_manifest.json", d / "practice.txt"])
+        self.assertEqual(sorted(set().union(*got.values())), ["a1", "a2", "b1", "c1", "c2"])
+
+class TestTutorialKey(unittest.TestCase):
+    """The coding app's tutorial answer key must be a clean extraction under the current schema."""
+
+    @classmethod
+    def setUpClass(cls):
+        path = Path(__file__).resolve().parents[1] / "src" / "extract" / "tutorial.json"
+        cls.tut = json.loads(path.read_text(encoding="utf-8"))
+
+    def test_key_matches_schema_version(self):
+        # A schema bump fails here until every key has been re-checked against the new definitions
+        from schema import SCHEMA_VERSION
+        self.assertEqual(self.tut["schema_version"], SCHEMA_VERSION)
+
+    def test_every_key_passes_the_guardrails_unchanged(self):
+        for p in self.tut["posts"]:
+            with self.subTest(post=p["id"]):
+                key = p["key"]
+                self.assertEqual(set(key), set(FIELD_NAMES))
+                self.assertTrue(all(key[f].get("why") for f in key), "every cell needs a rationale")
+                raw = {f: {x: key[f][x] for x in ("value", "evidence_span", "status")} for f in key}
+                r = normalize_extraction(raw, p["title"] + "\n" + p["selftext"])
+                self.assertEqual(r["violations"], [])
+                for f in FIELD_NAMES:
+                    self.assertEqual((r["fields"][f]["value"], r["fields"][f]["status"]), (key[f]["value"], key[f]["status"]), f)
+                self.assertNotEqual(key[AUDIT_FIELD]["status"], "not_stated")
 
 class TestPromptSpec(unittest.TestCase):
 

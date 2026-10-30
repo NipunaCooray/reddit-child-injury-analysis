@@ -11,11 +11,13 @@ Phase 1 (`src/classify/`) answers *was this a real child injury event?* Phase 2 
 | `schema.py` | Fields, vocabularies, guardrails, prompt-spec renderer. Single source of truth; no OpenAI dependency. |
 | `common.py` | Shared I/O helpers (Phase 1 helpers copied verbatim, plus label reading and the `selftext` guard). |
 | `filter_confirmed.py` | Writes the confirmed-only analytic dataset; asserts the count against Phase 1's timing JSON. |
-| `sample_pilot.py` | Purposive stratified pilot sampler (stratified on Phase 1 `mechanism_of_injury`). |
+| `sample_pilot.py` | Purposive stratified sampler (stratified on Phase 1 `mechanism_of_injury`) for the pilot and the human-coding samples; `--exclude` drops posts already used. |
 | `extract_events_openai.py` | Extraction runner. |
 | `validate_extractions.py` | Automated QA tier. |
 | `compare_extractions.py` | Side-by-side comparison of runs on the same posts (model choice) and the hand-review sheet. |
 | `make_review_md.py` | Builds the single-reviewer hand-review file: definitions, then each post with the model's answers (Markdown, local only). |
+| `export_coding_app.py` | Exports the codebook, the tutorial and a human-coding sample (title, body, permalink only; no model output or Phase 1 labels) as JSON documents for the coding app. Written under `reports/coding_app/`. |
+| `tutorial.json` | Eight constructed practice posts with an answer key and a reason per field, for the coding app's Tutorial tab. Invented text, so it is committed. Tests check every key against `schema.py`; a schema bump fails them until the key is re-checked and its `schema_version` updated. |
 | `make_review_workbook.py` | Builds the multi-reviewer hand-review Excel workbook with per-cell verdicts; protocol in `HAND_REVIEW.md`. Needs `openpyxl`. |
 
 Tests: `python -m unittest tests/test_extract_schema.py` from the repo root.
@@ -54,6 +56,16 @@ python src/extract/compare_extractions.py \
 Extractor options added in v1.1: `--workers N` runs concurrent API calls while keeping output order; `--reasoning-effort minimal|low|medium|high` applies to GPT-5-family models only. Changing `--reasoning-effort` changes the model's behaviour, so record it and keep it fixed across the pilot comparison and the full run.
 
 Then **read every pilot output by hand**. The QA numbers only tell you where to look. Revise `schema.py`, bump `SCHEMA_VERSION` (with a dated `SCHEMA_HISTORY` entry), and only then run the full set.
+
+The human-coding samples reuse the sampler with `--exclude`, which drops posts used elsewhere before stratifying. It takes a sample JSONL, a `*_manifest.json` or a text file with one post id per line, and can be repeated. The deep tier must exclude the 60 pilot posts, because the study lead has seen the model's answers for them, and the coder's practice set:
+
+```bash
+python src/extract/sample_pilot.py --name deeptier --n <N> \
+  --exclude data/interim/pilot60_stratified.jsonl \
+  --exclude data/interim/practice<K>_stratified.jsonl
+```
+
+The manifest records the excluded files and how many posts each removed. Stratum sizes are reported after exclusion.
 
 Compare the two models on unsupported-span rate, per-field `not_stated` rate and enum-violation rate. `gpt-5-nano` is the default only for consistency with Phase 1. Whichever model wins, the timing JSON records the requested model, the API-resolved model version (`model_resolved`), temperature, schema version and run date.
 
@@ -122,6 +134,8 @@ Phase 2 trusts Phase 1's `is_injury_event`, so Phase 1's errors flow straight in
 
 `near_miss` (from v1.4) is a real hazardous incident with no injury and none suspected: caught before falling, a pebble taken out of the mouth, pulled out of the pool. Phase 1's prompt defines an injury event as a *harmful* incident but never mentions near misses, and it kept some. Before v1.4 they were lumped with off-topic posts under `not_an_injury_event`. They are reported separately because whether they belong in the analysis is a study decision, not a Phase 1 error.
 
+From v1.5 the line between the two is the hazard reaching the child, whatever the outcome. A stated ingestion or excess dose with no symptoms is `actual_injury_event`, and so is submersion with coughing, spluttering, blue or limp (non-fatal drowning under the WHO 2002 definition). A face under water, lifted out at once with no distress, is `near_miss`. Worry alone is not suspicion, and a side effect of a correctly given dose is `not_an_injury_event`. Phase 1's definition never decided these cases, so they are settled here and apply to the Phase 1 audit as well.
+
 `validate_extractions.py` prints the audit and writes `audit_disagreements.csv` (candidate false positives and near misses, one row each). These are **candidates**: model disagreement is not a ground-truth error, so a human must read each one before any rate is cited. The audit judgement does not filter or blank the extraction. Excluding non-events from the analysis is a decision to make after the human check.
 
 The pilot's accepted posts are purposively stratified and over-sample Phase 1's `other`/`unknown` mechanisms, where false positives concentrate. The pilot false-positive rate therefore overstates the rate across all 1,237 posts. Estimate that rate from the full run, or from a random sample.
@@ -132,4 +146,4 @@ From v1.1, each JSONL record keeps `raw_response` (the model's raw output) and `
 
 ## Schema versioning
 
-`SCHEMA_VERSION` is written into every output record as `extraction_schema_version`. It is a separate key from the crawler's own `schema_version`. Bump it on any change to field names or enumerations and add a dated `SCHEMA_HISTORY` entry. Undocumented drift between coding rounds invalidates the reliability statistics.
+`SCHEMA_VERSION` is written into every output record as `extraction_schema_version`. It is a separate key from the crawler's own `schema_version`. Bump it on any change to field names or enumerations and add a dated `SCHEMA_HISTORY` entry. Undocumented drift between coding rounds invalidates the human–model agreement statistics.

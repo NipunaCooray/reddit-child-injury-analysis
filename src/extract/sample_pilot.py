@@ -13,6 +13,11 @@ strata first so rare mechanisms keep their full allocation.
 used when a stratum-specific field needs enough cases to assess (e.g. fall_height
 and landing_surface need falls, but 'fall' is the stratum trimmed first).
 
+--exclude PATH drops posts already used elsewhere before stratifying — the deep tier
+must exclude the 60 pilot posts (the study lead has seen the model's answers for them)
+and the coder's practice set. PATH is a sample JSONL, a *_manifest.json, or a text file
+with one post id per line (repeatable). Stratum sizes are reported after exclusion.
+
 Seeded and reproducible. Methods must record that the pilot is PURPOSIVE, not random.
 """
 
@@ -32,6 +37,22 @@ def parse_boost(items) -> dict:
         if not k.isdigit():
             raise SystemExit(f"--boost expects STRATUM=K, got {item!r}")
         out[name] = int(k)
+    return out
+
+def load_exclude_ids(paths) -> dict:
+    """{path: set of post ids} from sample JSONLs, *_manifest.json files or one-id-per-line text files."""
+    out = {}
+    for p in paths or []:
+        path = Path(p).expanduser().resolve()
+        if not path.is_file():
+            raise SystemExit(f"--exclude file not found: {path}")
+        if path.name.endswith("_manifest.json"):
+            ids = json.loads(path.read_text(encoding="utf-8"))["ids"]
+        elif path.name.endswith((".jsonl", ".jsonl.gz")):
+            ids = [r.get("id") for r in load_jsonl(path)]
+        else:
+            ids = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        out[str(path)] = {str(i) for i in ids if i}
     return out
 
 def allocate(sizes: dict, n: int, per_stratum: int, boost: dict = None) -> dict:
@@ -75,14 +96,18 @@ def main():
 
     ap = argparse.ArgumentParser(description="Purposive stratified pilot sample for Phase 2 extraction.")
     ap.add_argument("--in", dest="inp", default=None, help="Confirmed events JSONL; default: newest confirmed_events_n*.jsonl")
-    ap.add_argument("--out", default=None, help="Output path; default: data/interim/pilot<N>_stratified.jsonl")
+    ap.add_argument("--out", default=None, help="Output path; default: data/interim/<name><N>_stratified.jsonl")
+    ap.add_argument("--name", default="pilot", help="Sample name for the default output path (e.g. deeptier)")
     ap.add_argument("--n", type=int, default=50, help="Pilot size")
     ap.add_argument("--per-stratum", type=int, default=4, help="Floor per mechanism stratum")
     ap.add_argument("--seed", type=int, default=2026, help="Random seed (reproducibility)")
     ap.add_argument("--boost", action="append", default=None, metavar="STRATUM=K",
                     help="Raise one stratum's floor to K, exempt from trimming (repeatable)")
+    ap.add_argument("--exclude", action="append", default=None, metavar="PATH",
+                    help="Drop these posts before sampling: sample JSONL, *_manifest.json or id-per-line file (repeatable)")
     args = ap.parse_args()
     boost = parse_boost(args.boost)
+    exclude = load_exclude_ids(args.exclude)
 
     in_path = Path(args.inp).expanduser().resolve() if args.inp else newest_matching(interim, "confirmed_events_n*.jsonl")
     if not in_path.is_file():
@@ -94,6 +119,18 @@ def main():
     confirmed = [r for r in records if is_confirmed(r)]
     if len(confirmed) != len(records):
         print(f"[warn] {len(records) - len(confirmed)} non-confirmed records in input ignored")
+
+    excluded_ids = set().union(*exclude.values()) if exclude else set()
+    n_excluded = 0
+    if excluded_ids:
+        present = {str(r.get("id")) for r in confirmed}
+        for path, ids in exclude.items():
+            missing = len(ids - present)
+            print(f"Excluding {len(ids)} ids from {Path(path).name}" + (f" ({missing} not in input)" if missing else ""))
+        before = len(confirmed)
+        confirmed = [r for r in confirmed if str(r.get("id")) not in excluded_ids]
+        n_excluded = before - len(confirmed)
+        print(f"Excluded {n_excluded} posts; sampling from {len(confirmed)}")
 
     strata = defaultdict(list)
     for r in confirmed:
@@ -120,7 +157,7 @@ def main():
     for s in sorted(sizes, key=lambda s: (-sizes[s], s)):
         sample.extend(strata[s][:alloc[s]])
 
-    out_path = Path(args.out).expanduser().resolve() if args.out else interim / f"pilot{total}_stratified.jsonl"
+    out_path = Path(args.out).expanduser().resolve() if args.out else interim / f"{args.name}{total}_stratified.jsonl"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fp:
         for r in sample:
@@ -138,6 +175,8 @@ def main():
             "per_stratum": args.per_stratum,
             "boost": boost,
             "seed": args.seed,
+            "excluded_files": {p: len(ids) for p, ids in exclude.items()},
+            "n_excluded": n_excluded,
             "stratum_sizes": sizes,
             "pilot_composition": alloc,
             "ids": [r.get("id") for r in sample],

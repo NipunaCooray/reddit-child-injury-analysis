@@ -24,7 +24,7 @@ This review checks one model's extraction against each post, cell by cell. It ha
 2. **Confirm the model before the full run.** In particular, check whether its inferences are justified by the post.
 3. **Settle the audit edge cases.** Decide how borderline posts count for `injury_event_check`, and therefore for Phase 1.
 
-It is **not** the reliability study the manuscript cites. The pilot posts shaped the schema, so they can't also validate it. Reliability comes later: a fresh **stratified** sample from the full run, coded **blind** by two people, with agreement statistics reported. See the last section.
+It is **not** the evaluation the manuscript cites. The pilot posts shaped the schema, so they can't also validate it. The evaluation comes later: a fresh **stratified** sample from the full run, coded **blind** by one coder and checked by a reviewer, with human–model agreement reported. See the last section.
 
 ## Build the workbook
 
@@ -80,7 +80,7 @@ Tier 1 rows are shaded and should be reviewed on **every** post. They are:
 Tier 2 rows need only a quick check. If time is short, finish tier 1 on all posts before starting tier 2 on any.
 
 - **`supervision_status`:** check every *inferred* value against the Codebook glosses. The prevention argument rests on this field, and `gpt-5.5` infers 43% of its values.
-- **`injury_event_check`:** the 24 posts that any model flagged are the ones that matter. Answer the open questions in the Decision log; the same rules then apply to Phase 1's case definition. Status rule (schema 1.3.0): `stated` if the post explicitly describes the incident and the harm, or explicitly says no harm occurred; `inferred` if the judgement rests on the post as a whole. This field is never `not_stated`; a post you can't judge is `unclear`. From schema 1.4.0, a real hazardous incident with no injury and none suspected is `near_miss`, not `not_an_injury_event`; if harm may have occurred, it is `suspected_injury_event`.
+- **`injury_event_check`:** the 24 posts that any model flagged are the ones that matter. Answer the open questions in the Decision log; the same rules then apply to Phase 1's case definition. Status rule (schema 1.3.0): `stated` if the post explicitly describes the incident and the harm, or explicitly says no harm occurred; `inferred` if the judgement rests on the post as a whole. This field is never `not_stated`; a post you can't judge is `unclear`. From schema 1.4.0, a real hazardous incident with no injury and none suspected is `near_miss`, not `not_an_injury_event`; if harm may have occurred, it is `suspected_injury_event`. From 1.5.0, the incident is the hazard reaching the child, whatever the outcome: a stated ingestion or excess dose with no symptoms is `actual_injury_event`; so is coming out of water coughing, spluttering, blue or limp (WHO non-fatal drowning). A face under water, lifted out at once with no coughing or distress, is `near_miss`. Worry alone (e.g. about "dry drowning") is not suspicion, and a side effect of a correct dose is `not_an_injury_event`.
 - **Free-text fields:** check the quote supports the value. Don't spend time on wording.
 
 ## Decision log
@@ -107,14 +107,27 @@ The log becomes the codebook, the `schema.py` changes and the Methods text, so w
 2. The Decision log rows marked `Schema change needed = Y` become `schema.py` changes. Bump `SCHEMA_VERSION` and add a dated `SCHEMA_HISTORY` entry.
 3. Re-run the same 60 posts on the chosen model (about $7 on `gpt-5.5`) to confirm the fixes, then run the full 1,237 posts.
 
-## The formal reliability study (later)
+## The formal human–model evaluation (later)
 
-This follows the study guide's "What coders do" section, which is the authoritative design. After the full run:
+This follows the study guide's "What the coder and reviewer do" section, which is the authoritative design. One coder codes; a second person, the reviewer, checks that coding and discusses unclear cases until the two agree. There is no independent double coding, so the study reports agreement between the agreed human coding and the model, not inter-rater reliability. After the full run:
 
 1. **Timing check.** Time blind coding on a small set of posts. Verification is faster than coding from scratch, so times from this review underestimate it. That figure sets how large the deep tier can be.
-2. **Deep tier.** Draw a **stratified** sample that over-samples rarer mechanisms rather than reproducing the corpus distribution. Exclude the 60 pilot posts, because this reviewer has seen the model's output for them. Two coders each code all fields **blind**, from the narrative alone, using the locked codebook.
-3. **Adjudication.** Work through disagreements and log each one with its resolution.
-4. **Statistics.** Cohen's kappa or PABAK for enumerated fields, and span-level precision and recall for free-text fields: between the coders, and between each coder and the model.
+2. **Deep tier.** Draw a **stratified** sample that over-samples rarer mechanisms rather than reproducing the corpus distribution. Exclude the 60 pilot posts, because this reviewer has seen the model's output for them. The coder codes all fields **blind**, from the narrative alone, using the locked codebook.
+3. **Consensus review.** The reviewer checks the coder's answers against each post, also without the model's output. Unclear cases and disagreements are discussed until the two agree; any they cannot settle go to the supervisor. Log each one with its resolution, and turn any that change a definition into a codebook amendment.
+4. **Statistics.** Between the agreed human coding and the model: Cohen's kappa or PABAK for enumerated fields, and span-level precision and recall for free-text fields.
 5. **Targeted tier.** A larger sample on the four fields the conclusions rest on: `supervision_status`, `object_involved`, `mechanism_detail` and `care_pathway_outcome`.
 
-The coding there differs from this review. Coders write each cell's value, status and quote themselves rather than judging the model's, so that study needs a blind workbook with no model columns; ask for one when you get there.
+The coding there differs from this review. The coder writes each cell's value, status and quote themselves rather than judging the model's. It is done in the **coding app**, a private claude.ai page: https://claude.ai/artifact/LzSAe5YrRqNeNHP8VMgX3i
+
+- **Tutorial** tab: eight constructed posts (`tutorial.json`), each coded blind and then compared field by field with an answer key and the reason for each answer. Both the coder and the reviewer should work through it before the practice round. Nothing in it counts toward the study.
+- **Code** tab: the coder sees only the post and the codebook, never model output or Phase 1 labels. Each field needs a status, and a value and a word-for-word quote unless it is `not_stated`; a quote not found in the post blocks submission. Coding time per post is recorded for the timing check.
+- **Review** tab: the reviewer checks each submitted answer against the post, then marks it **Agree** or **Flag**. A flagged field gets a note thread with the coder and an agreed answer, marked resolved when both agree. A post is agreed once every field is agreed or resolved; unresolved cases can be escalated to the supervisor.
+- **Progress** tab: counts by state, median coding minutes per post, the fields flagged most, and a JSON download of the agreed coding.
+
+Share the page with the coder and the reviewer as **Contributors**: they can code and review but cannot change the posts or the codebook. Load the frozen codebook and each sample with:
+
+```bash
+python src/extract/export_coding_app.py --posts data/interim/deeptier<N>_stratified.jsonl --sample deeptier
+```
+
+Then load the files in `reports/coding_app/` into the app (Claude writes them with ArtifactData, 50 posts per batch). Uploading the sample puts its post text on claude.ai, readable by the people the page is shared with. The study lead approved that for the coding samples.
