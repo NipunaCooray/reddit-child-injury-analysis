@@ -117,17 +117,18 @@ This follows the study guide's "What the coder and reviewer do" section, which i
 4. **Statistics.** Between the agreed human coding and the model: Cohen's kappa or PABAK for enumerated fields, and span-level precision and recall for free-text fields.
 5. **Targeted tier.** A larger sample on the four fields the conclusions rest on: `supervision_status`, `object_involved`, `mechanism_detail` and `care_pathway_outcome`.
 
-The coding there differs from this review. The coder writes each cell's value, status and quote themselves rather than judging the model's. It is done in the **coding app**, a private claude.ai page: https://claude.ai/artifact/LzSAe5YrRqNeNHP8VMgX3i
+The coding there differs from this review. The coder writes each cell's value, status and quote themselves rather than judging the model's. It is done in the **coding app** (`coding_app/`, hosted on Firebase): https://human-coding.web.app. Only emails the study lead adds can sign in, and each person's role (coder, reviewer, admin) is enforced by the database's access rules.
 
 - **Tutorial** tab: eight constructed posts (`tutorial.json`), each coded blind and then compared field by field with an answer key and the reason for each answer. Both the coder and the reviewer should work through it before the practice round. Nothing in it counts toward the study.
 - **Code** tab: the coder sees only the post and the codebook, never model output or Phase 1 labels. Each field needs a status, and a value and a word-for-word quote unless it is `not_stated`; a quote not found in the post blocks submission. Coding time per post is recorded for the timing check.
 - **Review** tab: the reviewer checks each submitted answer against the post, then marks it **Agree** or **Flag**. A flagged field gets a note thread with the coder and an agreed answer, marked resolved when both agree. A post is agreed once every field is agreed or resolved; unresolved cases can be escalated to the supervisor.
 - **Progress** tab: counts by state, median coding minutes per post, the fields flagged most, and a JSON download of the agreed coding.
+- **Admin** tab (study lead only): add or remove people, load the exported files, and download a full backup.
 
-Share the page with the coder and the reviewer as **Contributors**: they can code and review but cannot change the posts or the codebook. Load the frozen codebook and each sample with:
+Add the coder and the reviewer in the Admin tab with their roles: the coder codes, the reviewer reviews, and neither can change the posts or the codebook. Export the frozen codebook and each sample with:
 
 ```bash
 python src/extract/export_coding_app.py --posts data/interim/deeptier<N>_stratified.jsonl --sample deeptier
 ```
 
-Then load the files in `reports/coding_app/` into the app (Claude writes them with ArtifactData, 50 posts per batch). Uploading the sample puts its post text on claude.ai, readable by the people the page is shared with. The study lead approved that for the coding samples.
+Then load the files in `reports/coding_app/` in the Admin tab. Loading a sample puts its post text in the project's Firestore database (Sydney), readable only by the people on the list. Setup, roles and backups are in `coding_app/README.md`.

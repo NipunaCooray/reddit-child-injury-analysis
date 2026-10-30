@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Injury Narrative Coding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: workbench — post list | narrative | coding form; stacks to one column on phones */
+:root {
+  --bg: #f4f5f2; --surface: #ffffff; --sunk: #eceee9; --ink: #1c2320; --muted: #5b6660; --line: #d9ded8;
+  --accent: #1d5e7a; --accent-ink: #ffffff; --accent-soft: #e1edf2;
+  --pre: #8a6a14; --event: #a8392c; --post: #2e5f8f; --interp: #6a588c; --audit: #4b5660;
+  --ok: #2b7a4b; --ok-soft: #e2f1e7; --warn: #9a6200; --warn-soft: #f8edd6; --bad: #b0281f; --bad-soft: #f8e3e0;
+  --mark: #fde9a6;
+  --f-ui: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-read: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-code: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141917; --surface: #1c2220; --sunk: #232a27; --ink: #e5eae6; --muted: #9aa59f; --line: #333c38;
+  --accent: #6cb4d4; --accent-ink: #0f1a1f; --accent-soft: #1f3540;
+  --pre: #d8b45a; --event: #ec8475; --post: #86b2e0; --interp: #b6a3dc; --audit: #a9b3bb;
+  --ok: #6fc993; --ok-soft: #1c3527; --warn: #e3ac4f; --warn-soft: #3a2e17; --bad: #f08a80; --bad-soft: #3d1f1c;
+  --mark: #5a4a12; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141917; --surface: #1c2220; --sunk: #232a27; --ink: #e5eae6; --muted: #9aa59f; --line: #333c38;
+  --accent: #6cb4d4; --accent-ink: #0f1a1f; --accent-soft: #1f3540;
+  --pre: #d8b45a; --event: #ec8475; --post: #86b2e0; --interp: #b6a3dc; --audit: #a9b3bb;
+  --ok: #6fc993; --ok-soft: #1c3527; --warn: #e3ac4f; --warn-soft: #3a2e17; --bad: #f08a80; --bad-soft: #3d1f1c;
+  --mark: #5a4a12; color-scheme: dark }
+
+* { box-sizing: border-box }
+html, body { height: 100% }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 var(--f-ui); display: flex; flex-direction: column; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface) }
+button, select, input, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.mono { font-family: var(--f-code); font-size: 12.5px }
+.muted { color: var(--muted) }
+
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line);
+  padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px }
+.brand { display: flex; flex-direction: column; gap: 1px; min-width: 0 }
+.brand b { font-size: 15px; letter-spacing: .01em }
+.brand span { font-size: 12px; color: var(--muted) }
+.tabs { display: flex; gap: 2px; background: var(--sunk); padding: 3px; border-radius: 8px }
+.tabs button { border: 0; background: transparent; padding: 6px 12px; border-radius: 6px; font-weight: 500; color: var(--muted) }
+.tabs button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .08) }
+.spacer { flex: 1 }
+.who { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted) }
+.who img { width: 22px; height: 22px; border-radius: 50% }
+select.sample { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 5px 8px }
+
+.notice { margin: 12px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); padding: 10px 12px; border-radius: var(--r); background: var(--warn-soft); color: var(--ink); border: 1px solid var(--line) }
+
+main { flex: 1; min-height: 0; display: grid; grid-template-columns: 250px minmax(0, 1fr) minmax(0, 520px); }
+main.wide { grid-template-columns: 250px minmax(0, 1fr) minmax(0, 620px) }
+main.single { grid-template-columns: minmax(0, 1fr) }
+.pane { min-height: 0; overflow: auto; padding-block: 14px; padding-inline: 16px }
+.pane + .pane { border-left: 1px solid var(--line) }
+
+/* post list */
+.list h2, .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; font-weight: 600 }
+.plist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px }
+.plist button { width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 8px; border-radius: var(--r); display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 2px 8px; align-items: start }
+.plist button:hover { background: var(--sunk) }
+.plist button[aria-current="true"] { background: var(--accent-soft) }
+.plist .n { font-family: var(--f-code); font-size: 11.5px; color: var(--muted); padding-top: 1px; font-variant-numeric: tabular-nums }
+.plist .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500 }
+.plist .s { grid-column: 2 }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--sunk); color: var(--muted); white-space: nowrap }
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor }
+.chip.draft { color: var(--warn); background: var(--warn-soft) }
+.chip.submitted, .chip.review { color: var(--accent); background: var(--accent-soft) }
+.chip.flagged, .chip.escalated { color: var(--bad); background: var(--bad-soft) }
+.chip.agreed { color: var(--ok); background: var(--ok-soft) }
+.list select.mobile-pick { display: none }
+
+/* narrative */
+.post-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 10px }
+.post-head .id { font-family: var(--f-code); font-size: 12px; color: var(--muted) }
+.post-head a { color: var(--accent); font-size: 12.5px }
+.story { font-family: var(--f-read); font-size: 17px; line-height: 1.6; max-width: 68ch }
+.story h1 { font-family: var(--f-read); font-size: 22px; line-height: 1.3; font-weight: 600; margin: 0 0 14px; text-wrap: balance }
+.story p { margin: 0 0 .9em; overflow-wrap: anywhere }
+.story mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1px }
+.example-tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--warn); border: 1px solid currentColor; border-radius: 4px; padding: 1px 6px; margin-bottom: 10px }
+.sel-hint { font-size: 12.5px; color: var(--muted); margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; max-width: 68ch }
+
+/* form */
+.form-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 10px }
+.savestate { font-size: 12px; color: var(--muted) }
+.phase { margin: 18px 0 8px; display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase }
+.phase::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--pc) }
+.phase:first-of-type { margin-top: 4px }
+.cell { --pc: var(--muted); border: 1px solid var(--line); border-left: 3px solid var(--pc); background: var(--surface); border-radius: var(--r); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px }
+.cell.untouched { border-style: dashed; border-left-style: solid }
+.cell.invalid { box-shadow: inset 0 0 0 1px var(--bad) }
+.cell.locked { opacity: .62 }
+.cell-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
+.fname { font-family: var(--f-code); font-weight: 500; font-size: 13px }
+.ftag { font-size: 11px; color: var(--muted) }
+button.info { margin-left: auto; border: 1px solid var(--line); background: transparent; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; color: var(--muted); line-height: 1 }
+.def { font-size: 13px; color: var(--muted); background: var(--sunk); border-radius: var(--r); padding: 8px 10px }
+.def ul { margin: 6px 0 0; padding-left: 18px }
+.def code { font-family: var(--f-code); font-size: 12px; color: var(--ink) }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden }
+.seg button { border: 0; background: transparent; padding: 4px 10px; font-size: 12.5px; color: var(--muted) }
+.seg button + button { border-left: 1px solid var(--line) }
+.seg button[aria-pressed="true"][data-s="stated"] { background: var(--ink); color: var(--bg) }
+.seg button[aria-pressed="true"][data-s="inferred"] { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent) }
+.seg button[aria-pressed="true"][data-s="not_stated"] { background: var(--sunk); color: var(--ink) }
+.seg button:disabled { cursor: not-allowed; opacity: .45 }
+.row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap }
+.row > * { min-width: 0 }
+.cell select, .cell input[type=text], .cell textarea { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: var(--r); padding: 6px 8px }
+.cell select { font-family: var(--f-code); font-size: 12.5px }
+.cell textarea { resize: vertical; min-height: 38px; font-family: var(--f-read); font-size: 14px }
+.multi { display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: var(--f-code); font-size: 12px }
+.multi label { display: inline-flex; gap: 5px; align-items: center }
+.qrow { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px; align-items: start }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 6px 10px; border-radius: var(--r); font-weight: 500; font-size: 12.5px }
+.btn:hover { background: var(--sunk) }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.btn.primary:hover { filter: brightness(1.06) }
+.btn:disabled { opacity: .5; cursor: not-allowed }
+.btn.ok { color: var(--ok); border-color: var(--ok) }
+.btn.bad { color: var(--bad); border-color: var(--bad) }
+.btn[aria-pressed="true"].ok { background: var(--ok-soft) }
+.btn[aria-pressed="true"].bad { background: var(--bad-soft) }
+.msg { font-size: 12px }
+.msg.bad { color: var(--bad) } .msg.ok { color: var(--ok) } .msg.warn { color: var(--warn) }
+.footer-actions { position: sticky; bottom: 0; background: var(--bg); padding-block: 10px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px }
+.banner { border-radius: var(--r); padding: 10px 12px; font-size: 13px; margin-bottom: 10px; border: 1px solid var(--line); background: var(--sunk) }
+.banner.bad { background: var(--bad-soft) } .banner.ok { background: var(--ok-soft) } .banner.info { background: var(--accent-soft) }
+
+/* review */
+.answer { display: grid; grid-template-columns: 74px minmax(0,1fr); gap: 3px 10px; font-size: 13px }
+.answer dt { color: var(--muted); font-size: 12px }
+.answer dd { margin: 0; overflow-wrap: anywhere }
+.answer .q { font-family: var(--f-read); font-style: italic }
+.thread { display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed var(--line); padding-top: 8px }
+.thread .m { font-size: 13px; background: var(--sunk); border-radius: var(--r); padding: 6px 9px }
+.thread .m b { font-weight: 600; font-size: 12px; margin-right: 6px }
+.resolution { border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; background: var(--bg) }
+
+/* progress */
+.prog { max-width: 900px; padding-block: 18px; padding-inline: 16px; margin: 0 auto; width: 100% }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 8px 0 22px }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px }
+.stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums }
+.stat span { font-size: 12px; color: var(--muted) }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface) }
+table { border-collapse: collapse; width: 100%; font-size: 13px }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600 }
+td.num { font-variant-numeric: tabular-nums; text-align: right }
+.empty { max-width: 560px; margin: 40px auto; padding-inline: 16px; text-align: left }
+
+/* tutorial */
+.intro { font-size: 12.5px; color: var(--muted); margin: 0 0 10px }
+.cmp { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px 14px }
+.cmp-h { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px }
+.why { margin: 0; font-size: 13px; background: var(--sunk); border-radius: var(--r); padding: 8px 10px }
+.takeaways { margin: 6px 0 0; padding-left: 18px }
+.coder-note p { margin: 4px 0 0; white-space: pre-wrap }
+.takeaways li + li { margin-top: 3px }
+.empty h2 { font-size: 18px; margin: 0 0 8px }
+
+/* sign-in and admin */
+.signin { display: flex; flex-direction: column; gap: 10px; max-width: 420px }
+.field-input { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 8px 10px }
+select.field-input { width: auto }
+.admin-sec { margin-bottom: 28px }
+.admin-sec > p { margin: 0 0 10px; max-width: 70ch }
+.who .btn { padding: 3px 8px; font-size: 12px }
+
+@media (max-width: 1100px) { main, main.wide { grid-template-columns: 220px minmax(0,1fr) } main .pane.form { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line) } main { overflow: auto } .pane { overflow: visible } }
+@media (max-width: 720px) {
+  main, main.wide { grid-template-columns: minmax(0,1fr) }
+  .pane + .pane { border-left: 0; border-top: 1px solid var(--line) }
+  .list .plist { display: none } .list select.mobile-pick { display: block; width: 100% }
+  .story { font-size: 16px }
+  .cmp { grid-template-columns: minmax(0,1fr) }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+<script type="module" src="backend.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b>Injury Narrative Coding</b><span id="schemaLine">Phase 2 · Haddon/ICECI codebook</span></div>
+  <div class="tabs" role="group" aria-label="Mode">
+    <button id="tabTutorial" aria-pressed="false">Tutorial</button>
+    <button id="tabCode" aria-pressed="true">Code</button>
+    <button id="tabReview" aria-pressed="false">Review</button>
+    <button id="tabProgress" aria-pressed="false">Progress</button>
+    <button id="tabAdmin" aria-pressed="false" hidden>Admin</button>
+  </div>
+  <select id="sampleSel" class="sample" aria-label="Sample"></select>
+  <div class="spacer"></div>
+  <div class="who" id="who"></div>
+</header>
+<div id="notice" class="notice" hidden></div>
+<main id="main" class="single"><div class="empty" id="boot"><h2>Loading…</h2><p class="muted">Checking whether you are signed in.</p></div></main>
+
+<script>
+(() => {
+"use strict";
+const PHASE_COLOR = { pre_event: "var(--pre)", event: "var(--event)", post_event: "var(--post)", interpretive: "var(--interp)", audit: "var(--audit)" };
+const TABS = [["tabTutorial", "tutorial"], ["tabCode", "code"], ["tabReview", "review"], ["tabProgress", "progress"], ["tabAdmin", "admin"]];
+const S = { be: null, db: null, user: null, me: null, role: null, cb: null, posts: new Map(), codes: new Map(), reviews: new Map(), tposts: new Map(), tcodes: new Map(),
+  tkeys: new Map(), roles: new Map(), mode: "code", sample: null, current: null, draft: null, rdraft: null, lastSel: "", openDefs: new Set(),
+  saving: false, savePending: false, saveTimer: null, activeSince: null };
+// roles: admin (the study lead) does everything; the coder codes; the reviewer reviews. The store's rules enforce the same.
+const isAdmin = () => S.role === "admin";
+const canCode = () => tut() || S.role === "coder" || isAdmin();
+const canReview = () => S.role === "reviewer" || isAdmin();
+const tabAllowed = (m) => m === "admin" ? isAdmin() : m === "review" ? S.role !== "coder" : true;
+const $ = (id) => document.getElementById(id);
+const el = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) { if (v == null || v === false) continue;
+    if (k === "class") n.className = v; else if (k === "text") n.textContent = v; else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (k === "style") n.setAttribute("style", v); else n.setAttribute(k, v === true ? "" : v); }
+  for (const c of kids.flat()) if (c != null && c !== false) n.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return n; };
+const nowIso = () => new Date().toISOString();
+// tutorial attempts are per person: tutorial_codes/<post>--<person>
+const tut = () => S.mode === "tutorial";
+const tdoc = (postId, uid) => `${postId}--${String(uid).replace(/[^A-Za-z0-9_-]/g, "_")}`;
+const tkey = (id) => tdoc(id, S.me);
+// the answer key (label, takeaways, key) is stored apart and only readable once this person has submitted the post
+const tpost = (id) => S.tposts.has(id) ? { ...S.tposts.get(id), ...(S.tkeys.get(id) || {}) } : undefined;
+const getPost = (id) => tut() ? tpost(id) : S.posts.get(id);
+const codePath = (doc) => doc.sample === "tutorial" ? "tutorial_codes/" + tdoc(doc.post_id, doc.coder) : "codes/" + doc.post_id;
+const store = { get(k) { try { return localStorage.getItem(k) } catch { return null } }, set(k, v) { try { localStorage.setItem(k, v) } catch {} } };
+
+// ---------- quote grounding (mirrors schema.py span_grounding) ----------
+const decoder = document.createElement("textarea");
+const unescape = (s) => { decoder.innerHTML = s; return decoder.value; };
+const norm = (s) => unescape(String(s || "")).replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').toLowerCase().split(/\s+/).filter(Boolean).join(" ");
+function grounding(quote, post) {
+  const src = norm(post.title + "\n" + post.selftext);
+  const q = norm(quote); if (!q) return "empty";
+  if (src.includes(q)) return "verbatim";
+  const segs = String(quote).split(/\.\.\.+|…|\n/).map(s => norm(s).replace(/^[ .,;:]+|[ .,;:]+$/g, "")).filter(Boolean);
+  if (segs.length > 1 && segs.every(s => s.split(" ").length >= 3 && src.includes(s))) return "elided";
+  return "unsupported";
+}
+
+// ---------- codebook helpers ----------
+const fdef = (f) => S.cb.fields.find(x => x.field === f);
+const isFall = (code) => S.cb.rules.fall_mechanisms.includes(code?.fields?.mechanism_iceci?.value);
+const locked = (f, code) => S.cb.rules.conditional_fall_fields.includes(f) && !isFall(code);
+function blankFields() { const o = {}; for (const d of S.cb.fields) o[d.field] = { value: null, status: null, quote: "" }; return o; }
+function cellProblems(f, c, code, post) {
+  const d = fdef(f), out = [];
+  if (locked(f, code)) return out;
+  if (!c.status) { out.push("Choose a status"); return out; }
+  if (c.status === "not_stated") { if (f === S.cb.rules.audit_field) out.push("This field is never not stated: use 'unclear'"); return out; }
+  const empty = c.value == null || c.value === "" || (Array.isArray(c.value) && !c.value.length);
+  if (empty) out.push("Choose a value");
+  if (d.type === "text" && c.value && c.value.length > S.cb.free_text_max) out.push(`Keep the value under ${S.cb.free_text_max} characters`);
+  if (!c.quote.trim()) out.push("Add the quote");
+  else if (grounding(c.quote, post) === "unsupported") out.push("Quote not found in the post: copy it word for word");
+  return out;
+}
+const problems = (code, post) => S.cb.fields.reduce((n, d) => n + (cellProblems(d.field, code.fields[d.field], code, post).length ? 1 : 0), 0);
+function consensus(code, review) {
+  const out = {};
+  for (const d of S.cb.fields) { const it = review?.items?.[d.field]; out[d.field] = (it && it.verdict === "flag" && it.resolved && it.resolution) ? it.resolution : code.fields[d.field]; }
+  return out;
+}
+function postState(id) {
+  if (tut()) { const c = S.tcodes.get(tkey(id));
+    if (!c) return ["none", "Not started"];
+    if (c.state !== "submitted") return ["draft", "Draft"];
+    const sc = score(tpost(id), c);
+    if (!sc.total) return ["submitted", "Checked"];
+    return sc.differs ? ["flagged", `${sc.differs} differ`] : ["agreed", "All match"]; }
+  const c = S.codes.get(id), r = S.reviews.get(id);
+  if (!c) return ["none", "Not started"];
+  if (c.state !== "submitted") return ["draft", "Draft"];
+  if (!r) return ["submitted", "Awaiting review"];
+  if (r.state === "agreed") return ["agreed", "Agreed"];
+  if (r.state === "escalated") return ["escalated", "Escalated"];
+  const open = Object.values(r.items || {}).filter(i => i.verdict === "flag" && !i.resolved).length;
+  return open ? ["flagged", `${open} flagged`] : ["review", "In review"];
+}
+
+// ---------- boot ----------
+async function boot() {
+  // backend.js signs the person in and checks the list before handing over the store
+  const be = await (window.HC_BACKEND || new Promise(r => window.addEventListener("hc-backend", e => r(e.detail), { once: true })));
+  S.be = be; S.db = be.db; S.user = be.user; S.role = be.role;
+  const db = S.db, me = await be.user.me(); S.me = me.id;
+  $("who").replaceChildren(el("span", { text: `${me.name || "Signed in"} · ${S.role}` }), el("button", { class: "btn", onclick: () => be.signOut(), text: "Sign out" }));
+  $("tabAdmin").hidden = !isAdmin(); $("tabReview").hidden = !tabAllowed("review");
+  S.mode = store.get("mode") || "tutorial"; if (!tabAllowed(S.mode)) S.mode = "tutorial";
+  S.sample = store.get("sample");
+  db.doc("config/codebook").onSnapshot(s => { S.cb = s.exists ? s.data() : null; requestRender(); }, dbErr);
+  db.collection("posts").onSnapshot(s => { S.posts = new Map(s.docs.map(d => [d.id, d.data()])); requestRender(); }, dbErr);
+  db.collection("codes").onSnapshot(s => { S.codes = new Map(s.docs.map(d => [d.id, d.data()])); onRemote("code"); }, dbErr);
+  db.collection("reviews").onSnapshot(s => { S.reviews = new Map(s.docs.map(d => [d.id, d.data()])); onRemote("review"); }, dbErr);
+  db.collection("tutorial").onSnapshot(s => { S.tposts = new Map(s.docs.map(d => [d.id, d.data()])); syncKeys(); requestRender(); }, dbErr);
+  db.collection("tutorial_codes").onSnapshot(s => { S.tcodes = new Map(s.docs.map(d => [d.id, d.data()])); syncKeys(); onRemote("tutorial"); }, dbErr);
+  if (isAdmin()) {
+    db.collection("tutorial_keys").onSnapshot(s => { S.tkeys = new Map(s.docs.map(d => [d.id, d.data()])); requestRender(); }, dbErr);
+    db.collection("roles").onSnapshot(s => { S.roles = new Map(s.docs.map(d => [d.id, d.data()])); requestRender(); }, dbErr);
+  }
+  for (const [b, m] of TABS) $(b).addEventListener("click", () => setMode(m));
+  $("sampleSel").addEventListener("change", e => { S.sample = e.target.value; store.set("sample", S.sample); S.current = null; render(); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) { tick(); S.activeSince = null; } else if (S.draft && S.draft.state !== "submitted") S.activeSince = Date.now(); });
+  document.addEventListener("mouseup", captureSelection); document.addEventListener("keyup", captureSelection);
+  document.addEventListener("pointerdown", () => { pointerDown = true; }, true);
+  document.addEventListener("pointerup", () => { pointerDown = false; setTimeout(tryRender, 0); }, true);
+  document.addEventListener("pointercancel", () => { pointerDown = false; setTimeout(tryRender, 0); }, true);
+  document.addEventListener("focusout", () => setTimeout(tryRender, 0));
+}
+// Non-admins read each key alone, once they have submitted that post; the store refuses it before then.
+// A refusal right after submitting is the write not having landed yet, so it retries a few times.
+const keySubs = new Map(), keyTries = new Map();
+function syncKeys() {
+  if (isAdmin() || !S.db) return;
+  for (const id of S.tposts.keys()) {
+    if (keySubs.has(id) || S.tcodes.get(tkey(id))?.state !== "submitted") continue;
+    keySubs.set(id, S.db.doc("tutorial_keys/" + id).onSnapshot(s => { if (s.exists) { S.tkeys.set(id, s.data()); requestRender(); } }, () => {
+      keySubs.delete(id); const n = (keyTries.get(id) || 0) + 1; keyTries.set(id, n);
+      if (n <= 5) setTimeout(syncKeys, 800 * n); }));
+  }
+}
+function dbErr(e) { showNotice(e?.code === "permission-denied" ? "The store refused a request. If your access was just changed, sign out and in again." : `The store reported a problem (${e?.code || "unknown"}). Your last saved work is kept; reload if this persists.`); }
+function showNotice(t) { const n = $("notice"); n.textContent = t; n.hidden = !t; }
+function onRemote(kind) {
+  // never overwrite what the person is typing; take remote state only when there is no local draft
+  if (kind === "code" && S.mode === "code" && S.current && S.draft && !S.dirty) S.draft = clone(S.codes.get(S.current)) || S.draft;
+  if (kind === "tutorial" && tut() && S.current && S.draft && !S.dirty) S.draft = clone(S.tcodes.get(tkey(S.current))) || S.draft;
+  if (kind === "review" && S.mode === "review" && S.current && !S.rdirty) S.rdraft = clone(S.reviews.get(S.current)) || S.rdraft;
+  requestRender();
+}
+const clone = (x) => x ? JSON.parse(JSON.stringify(x)) : x;
+function setMode(m) { if (!tabAllowed(m)) return; flushSave(); S.mode = m; store.set("mode", m); S.current = null; S.draft = S.rdraft = null; render(); }
+function captureSelection() { const sel = window.getSelection(); if (!sel || sel.isCollapsed) return;
+  const story = document.querySelector(".story"); if (story && story.contains(sel.anchorNode) && story.contains(sel.focusNode)) { S.lastSel = sel.toString().trim(); const h = $("selHint"); if (h) h.textContent = `Selected: “${S.lastSel.slice(0, 90)}${S.lastSel.length > 90 ? "…" : ""}” — press “Use selection” on a field to paste it as the quote.`; } }
+
+// ---------- render ----------
+function samples() { return [...new Set([...S.posts.values()].map(p => p.sample))].sort(); }
+function postsInSample() { return [...S.posts.values()].filter(p => p.sample === S.sample).sort((a, b) => (a.order || 0) - (b.order || 0)); }
+function tutorialPosts() { return [...S.tposts.values()].sort((a, b) => (a.order || 0) - (b.order || 0)); }
+let renderQueued = false, pointerDown = false;
+const typing = () => { const a = document.activeElement; return !!a && $("main").contains(a) && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && (a.type === "text" || a.type === "email"))); };
+function requestRender() { renderQueued = true; setTimeout(tryRender, 0); }
+function tryRender() { if (!renderQueued || pointerDown || typing()) return; renderQueued = false; render(); }
+function render() {
+  if (!S.db) return;
+  renderQueued = false;
+  const main = $("main");
+  const keep = { main: main.scrollTop, panes: [...main.querySelectorAll(".pane")].map(p => p.scrollTop), win: window.scrollY, focus: document.activeElement?.id, post: S.current, mode: S.mode };
+  paint(main);
+  if (keep.post === S.current && keep.mode === S.mode) { main.scrollTop = keep.main; main.querySelectorAll(".pane").forEach((p, i) => { if (keep.panes[i] != null) p.scrollTop = keep.panes[i]; }); window.scrollTo(0, keep.win); if (keep.focus) $(keep.focus)?.focus({ preventScroll: true }); }
+}
+function paint(main) {
+  for (const [b, m] of TABS) $(b).setAttribute("aria-pressed", String(S.mode === m));
+  if (S.mode === "admin") { $("sampleSel").hidden = true; return renderAdmin(main); }
+  if (!S.cb) { main.className = "single"; main.replaceChildren(emptyState("No codebook loaded yet", isAdmin() ? "Load the exported files in the Admin tab." : "The study lead loads the frozen codebook before coding starts. Nothing to do until then.")); return; }
+  $("schemaLine").textContent = `Phase 2 · codebook schema ${S.cb.schema_version}`;
+  const ss = samples();
+  if (ss.length && !ss.includes(S.sample)) S.sample = ss[0];
+  if (ss.length) $("sampleSel").replaceChildren(...ss.map(s => el("option", { value: s, selected: s === S.sample, text: `${s} (${[...S.posts.values()].filter(p => p.sample === s).length})` })));
+  $("sampleSel").hidden = tut() || !ss.length;
+  if (S.mode === "progress") return renderProgress(main, ss.length > 0);
+  if (tut() && !S.tposts.size) { main.className = "single"; main.replaceChildren(emptyState("No tutorial loaded yet", "The study lead loads the tutorial posts together with the codebook.")); return; }
+  if (!tut() && !ss.length) { main.className = "single"; main.replaceChildren(emptyState("No posts loaded yet", "The study lead loads each coding sample (practice set, deep tier). They will appear here. Until then, the Tutorial tab has practice posts with an answer key.")); return; }
+  const list = tut() ? tutorialPosts() : S.mode === "review" ? postsInSample().filter(p => S.codes.get(p.id)?.state === "submitted") : postsInSample();
+  if (S.current && !list.some(p => p.id === S.current)) S.current = null;
+  if (!S.current && list.length) openPost((tut() ? list.find(p => S.tcodes.get(tkey(p.id))?.state !== "submitted") : S.mode === "code" ? list.find(p => postState(p.id)[0] !== "agreed" && S.codes.get(p.id)?.state !== "submitted") : list.find(p => !["agreed"].includes(postState(p.id)[0])))?.id || list[0].id, true);
+  const comparing = tut() && S.draft?.state === "submitted";
+  main.className = S.mode === "review" || comparing ? "wide" : "";
+  const listPane = el("nav", { class: "pane list", "aria-label": "Posts" }, el("h2", { text: tut() ? "Tutorial" : S.mode === "review" ? "Submitted posts" : "Posts" }));
+  if (tut()) listPane.append(el("p", { class: "intro", text: "Constructed posts with an answer key. Code each one as you would a real post, then check it against the key. Nothing here counts toward the study." }));
+  if (!list.length) listPane.append(el("p", { class: "muted", text: "No posts have been submitted for review yet." }));
+  const pick = el("select", { class: "mobile-pick", "aria-label": "Post", onchange: e => openPost(e.target.value) });
+  const ul = el("ul", { class: "plist" });
+  list.forEach((p, i) => { const [cls, label] = postState(p.id);
+    ul.append(el("li", {}, el("button", { "aria-current": String(p.id === S.current), onclick: () => openPost(p.id) },
+      el("span", { class: "n", text: String(p.order || i + 1).padStart(3, "0") }), el("span", { class: "t", text: p.title || "(untitled)" }), el("span", { class: "s" }, el("span", { class: `chip ${cls}`, text: label })))));
+    pick.append(el("option", { value: p.id, selected: p.id === S.current, text: `${p.order || i + 1}. ${p.title} — ${label}` })); });
+  listPane.append(pick, ul);
+  if (!S.current) { main.replaceChildren(listPane, el("section", { class: "pane" }), el("section", { class: "pane form" })); return; }
+  const post = getPost(S.current);
+  main.replaceChildren(listPane, renderStory(post), S.mode === "review" ? renderReview(post) : comparing ? renderCompare(post) : renderCoding(post));
+}
+function emptyState(h, p) { return el("div", { class: "empty" }, el("h2", { text: h }), el("p", { class: "muted", text: p })); }
+function openPost(id, silent) {
+  flushSave(); S.current = id; S.dirty = S.rdirty = false;
+  if (S.mode === "code" || tut()) { S.draft = clone(tut() ? S.tcodes.get(tkey(id)) : S.codes.get(id)) || { post_id: id, sample: getPost(id).sample, coder: S.me, schema_version: S.cb.schema_version, state: "draft", fields: blankFields(), seconds_spent: 0, started_at: null };
+    S.activeSince = S.draft.state === "submitted" ? null : Date.now(); }
+  else S.rdraft = clone(S.reviews.get(id)) || null;
+  if (!silent) render();
+}
+function renderStory(post) {
+  const wrap = el("section", { class: "pane", "aria-label": "Post" });
+  wrap.append(el("div", { class: "post-head" }, el("span", { class: "id", text: post.id })));
+  const story = el("article", { class: "story" });
+  if (post.sample === "example" || post.sample === "tutorial") story.append(el("div", { class: "example-tag", text: post.sample === "tutorial" ? "Tutorial · constructed, not from the corpus" : "Constructed example · not from the corpus" }));
+  story.append(el("h1", { text: unescape(post.title || "") }));
+  for (const para of unescape(post.selftext || "").split(/\n\s*\n/)) if (para.trim()) story.append(el("p", { text: para.trim() }));
+  wrap.append(story, el("p", { class: "sel-hint", id: "selHint", text: "Select text in the post, then press “Use selection” on a field to paste it as that field's quote." }));
+  return wrap;
+}
+function highlight(quote) {
+  const story = document.querySelector(".story"); if (!story) return;
+  story.querySelectorAll("mark").forEach(m => m.replaceWith(document.createTextNode(m.textContent))); story.normalize();
+  const words = norm(quote).split(" ").filter(Boolean); if (!words.length) return;
+  const esc = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/'/g, "['\u2018\u2019]").replace(/"/g, '["\u201C\u201D]');
+  const re = new RegExp(words.map(esc).join("\\s+"), "i");
+  for (const node of [...story.querySelectorAll("h1, p")]) { const t = node.textContent, m = t.match(re);
+    if (m) { node.replaceChildren(t.slice(0, m.index), el("mark", { text: m[0] }), t.slice(m.index + m[0].length)); node.querySelector("mark").scrollIntoView({ block: "nearest", behavior: "smooth" }); return; } }
+}
+
+// ---------- coding form ----------
+function renderCoding(post) {
+  const code = S.draft, review = tut() ? null : S.reviews.get(post.id), submitted = code.state === "submitted";
+  const editable = canCode() && !submitted;
+  const pane = el("section", { class: "pane form", "aria-label": "Coding form" });
+  const nProb = problems(code, post);
+  const saved = tut() ? S.tcodes.has(tkey(post.id)) : S.codes.has(post.id);
+  pane.append(el("div", { class: "form-head" }, el("span", { class: "section-title", text: submitted ? "Your submitted coding" : tut() ? "Code every field, then check against the key" : "Code every field from the post alone" }),
+    el("span", { class: "savestate", id: "saveState", text: submitted ? "Submitted" : (S.dirty ? "Unsaved changes" : (saved ? "Saved" : "Not started")) })));
+  if (review) {
+    const open = Object.entries(review.items || {}).filter(([, i]) => i.verdict === "flag" && !i.resolved);
+    if (review.state === "agreed") pane.append(el("div", { class: "banner ok", text: "The reviewer has marked this post agreed. The agreed coding is final." }));
+    else if (open.length) pane.append(el("div", { class: "banner bad", text: `The reviewer flagged ${open.length} field${open.length > 1 ? "s" : ""}. Read their notes under each flagged field and reply; agreed answers are set in Review.` }));
+    else pane.append(el("div", { class: "banner info", text: "The reviewer is checking this post." }));
+  }
+  let phase = null;
+  for (const d of S.cb.fields) {
+    if (d.phase !== phase) { phase = d.phase; pane.append(el("div", { class: "phase", style: `--pc:${PHASE_COLOR[phase]}`, text: S.cb.phases.find(p => p.id === phase).title })); }
+    pane.append(fieldCell(d, code, post, editable, review));
+  }
+  if (!tut() && (editable || code.note)) pane.append(noteCell(code, editable));
+  const foot = el("div", { class: "footer-actions" });
+  if (!submitted) {
+    const untouched = S.cb.fields.filter(d => !code.fields[d.field].status && !locked(d.field, code) && d.field !== S.cb.rules.audit_field).length;
+    foot.append(el("button", { class: "btn", disabled: !editable || !untouched, onclick: markRemaining, text: `Mark ${untouched} untouched as not stated` }),
+      el("span", { class: "spacer" }),
+      el("span", { class: nProb ? "msg bad" : "msg ok", text: nProb ? `${nProb} field${nProb > 1 ? "s" : ""} to finish` : "Ready to submit" }),
+      el("button", { class: "btn primary", disabled: !editable || nProb > 0, onclick: submit, text: tut() ? "Check against the key" : "Submit for review" }));
+  } else {
+    const m = Math.round((code.seconds_spent || 0) / 60);
+    foot.append(el("span", { class: "msg muted", text: `Submitted ${code.submitted_at ? new Date(code.submitted_at).toLocaleString() : ""} · about ${m} min coding time` }));
+    if (!review && canCode()) foot.append(el("span", { class: "spacer" }), el("button", { class: "btn", onclick: reopen, text: "Reopen to edit" }));
+  }
+  pane.append(foot);
+  return pane;
+}
+function fieldCell(d, code, post, editable, review) {
+  const f = d.field, c = code.fields[f], lock = locked(f, code), probs = (c.status || lock) ? cellProblems(f, c, code, post) : [];
+  const cell = el("div", { class: `cell${!c.status && !lock ? " untouched" : ""}${probs.length ? " invalid" : ""}${lock ? " locked" : ""}`, style: `--pc:${PHASE_COLOR[d.phase]}`, id: "cell-" + f });
+  const top = el("div", { class: "cell-top" }, el("span", { class: "fname", text: f }), el("span", { class: "ftag", text: `${d.cell.replace(/_/g, " ")} · ${d.type === "multi_enum" ? "one or more values" : d.type === "enum" ? "one value" : "short paraphrase"}` }),
+    el("button", { class: "info", "aria-expanded": String(S.openDefs.has(f)), "aria-label": `Definition of ${f}`, title: "Definition", text: "i", onclick: () => { S.openDefs.has(f) ? S.openDefs.delete(f) : S.openDefs.add(f); render(); } }));
+  cell.append(top);
+  if (S.openDefs.has(f)) cell.append(defBox(d));
+  if (lock) { cell.append(el("span", { class: "msg muted", text: "Only coded when mechanism_iceci is a fall. Left not stated." })); return cell; }
+  const seg = el("div", { class: "seg", role: "group", "aria-label": `${f} status` });
+  for (const s of S.cb.statuses) seg.append(el("button", { "data-s": s, "aria-pressed": String(c.status === s), disabled: !editable || (s === "not_stated" && f === S.cb.rules.audit_field),
+    title: S.cb.status_help[s], text: s.replace("_", " "), onclick: () => setCell(f, { status: s }) }));
+  cell.append(seg);
+  if (c.status && c.status !== "not_stated") {
+    cell.append(valueInput(d, c.value, editable, (v, quiet) => setCell(f, { value: v }, quiet), "v-" + f));
+    const q = el("textarea", { id: "q-" + f, rows: "2", placeholder: "Quote from the post, word for word", disabled: !editable, onfocus: () => highlight(c.quote) });
+    q.value = c.quote || "";
+    q.addEventListener("input", () => setCell(f, { quote: q.value }, true));
+    q.addEventListener("change", () => requestRender());
+    cell.append(el("div", { class: "qrow" }, q, el("button", { class: "btn", disabled: !editable, onclick: () => { if (S.lastSel) setCell(f, { quote: S.lastSel }); }, text: "Use selection" })));
+    const g = c.quote ? grounding(c.quote, post) : null;
+    if (g === "verbatim") cell.append(el("span", { class: "msg ok", text: "Quote found in the post" }));
+    if (g === "elided") cell.append(el("span", { class: "msg warn", text: "Joined fragments, each found in the post. One continuous passage is preferred." }));
+  }
+  for (const p of probs) cell.append(el("span", { class: "msg bad", text: p }));
+  const it = review?.items?.[f];
+  if (it && it.verdict === "flag") cell.append(threadBox(f, it, review, "coder"));
+  return cell;
+}
+function defBox(d) {
+  const box = el("div", { class: "def" }, el("div", { text: d.definition }));
+  if (d.values.length) box.append(el("ul", {}, d.values.map(v => el("li", {}, el("code", { text: v.value }), v.note ? ` — ${v.note}` : ""))));
+  return box;
+}
+function valueInput(d, value, editable, onChange, id) {
+  if (d.type === "enum") {
+    const s = el("select", { id, disabled: !editable, "aria-label": `${d.field} value`, onchange: e => onChange(e.target.value || null) }, el("option", { value: "", text: "Choose a value…" }));
+    for (const v of d.values) s.append(el("option", { value: v.value, selected: v.value === value, text: v.value }));
+    return s;
+  }
+  if (d.type === "multi_enum") {
+    const cur = new Set(Array.isArray(value) ? value : []);
+    return el("div", { class: "multi", role: "group", "aria-label": `${d.field} values` }, d.values.map(v => el("label", {},
+      el("input", { type: "checkbox", disabled: !editable, checked: cur.has(v.value), onchange: e => { e.target.checked ? cur.add(v.value) : cur.delete(v.value); onChange(d.values.map(x => x.value).filter(x => cur.has(x))); } }), v.value)));
+  }
+  const i = el("input", { id, type: "text", maxlength: String(S.cb.free_text_max), placeholder: "Short paraphrase", disabled: !editable });
+  i.value = value || ""; i.addEventListener("input", () => onChange(i.value, true)); i.addEventListener("change", () => onChange(i.value, false));
+  return i;
+}
+// free-text note to the reviewer: doubts about a field or a rule, saved with the coding
+function noteCell(code, editable) {
+  const t = el("textarea", { id: "coderNote", rows: "3", maxlength: "2000", placeholder: "Optional. Anything you were unsure about: which field, and why.", disabled: !editable });
+  t.value = code.note || "";
+  t.addEventListener("input", () => { S.draft.note = t.value; S.dirty = true; S.seq = (S.seq || 0) + 1; scheduleSave(); const st = $("saveState"); if (st) st.textContent = "Unsaved changes"; });
+  return el("div", { class: "cell note" }, el("label", { for: "coderNote", class: "section-title", text: "Note for the reviewer" }), t);
+}
+function setCell(f, patch, quiet) {
+  const c = S.draft.fields[f];
+  Object.assign(c, patch);
+  if (patch.status === "not_stated") { c.value = null; c.quote = ""; }
+  if (f === "mechanism_iceci") for (const g of S.cb.rules.conditional_fall_fields) if (locked(g, S.draft)) S.draft.fields[g] = { value: null, status: "not_stated", quote: "" };
+  S.dirty = true; S.seq = (S.seq || 0) + 1; scheduleSave();
+  if (!quiet) render(); else { const st = $("saveState"); if (st) st.textContent = "Unsaved changes"; }
+}
+function markRemaining() { for (const d of S.cb.fields) { const c = S.draft.fields[d.field]; if (!c.status && d.field !== S.cb.rules.audit_field) Object.assign(c, { status: "not_stated", value: null, quote: "" }); } S.dirty = true; S.seq = (S.seq || 0) + 1; scheduleSave(); render(); }
+function tick() { if (S.activeSince && S.draft && S.draft.state !== "submitted") { const dt = Math.min((Date.now() - S.activeSince) / 1000, 600); S.draft.seconds_spent = Math.round((S.draft.seconds_spent || 0) + dt); S.activeSince = Date.now(); } }
+function scheduleSave() { clearTimeout(S.saveTimer); S.saveTimer = setTimeout(saveCode, 900); }
+function flushSave() { if (S.saveTimer) { clearTimeout(S.saveTimer); S.saveTimer = null; if (S.dirty) saveCode(); } }
+async function saveCode() {
+  S.saveTimer = null; if (!S.draft || !(S.draft.sample === "tutorial" || S.role === "coder" || isAdmin())) return;
+  if (S.saving) { S.savePending = true; return; }
+  tick(); S.saving = true;
+  const seq = S.seq || 0;
+  const doc = clone(S.draft); doc.coder = doc.coder || S.me; doc.started_at = doc.started_at || nowIso(); doc.updated_at = nowIso(); doc.schema_version = S.cb.schema_version;
+  try { await S.db.doc(codePath(doc)).set(doc); if (S.draft && S.draft.post_id === doc.post_id) { S.draft.started_at = doc.started_at; S.dirty = (S.seq || 0) !== seq; } const st = $("saveState"); if (st && S.current === doc.post_id) st.textContent = "Saved"; }
+  catch (e) { if (e?.code === "permission-denied") showNotice("The store refused to save this. Coding locks once the review is agreed; otherwise ask the study lead to check your role."); else showNotice(`Couldn't save (${e?.code || "error"}). Your changes are still on screen; they will save on your next edit.`); }
+  finally { S.saving = false; if (S.savePending) { S.savePending = false; saveCode(); } }
+}
+async function submit() { tick(); Object.assign(S.draft, { state: "submitted", submitted_at: nowIso() }); S.activeSince = null; S.dirty = true; await saveCode(); render(); }
+async function reopen() { Object.assign(S.draft, { state: "draft", submitted_at: null }); S.activeSince = Date.now(); S.dirty = true; await saveCode(); render(); }
+
+// ---------- tutorial: compare with the key ----------
+// Enumerated values are scored; free text is shown side by side for the coder to judge, since wording legitimately differs.
+function cmpCell(d, mine, key, code) {
+  const m = locked(d.field, code) ? { value: null, status: "not_stated", quote: "" } : mine;
+  const sameStatus = m.status === key.status;
+  if (key.status === "not_stated" || m.status === "not_stated" || !sameStatus) return { v: sameStatus ? "match" : "differs", m };
+  if (d.type === "text") return { v: norm(m.value) === norm(key.value) ? "match" : "check", m };
+  const a = [].concat(m.value ?? []).sort().join("|"), b = [].concat(key.value ?? []).sort().join("|");
+  return { v: a === b ? "match" : "differs", m };
+}
+function score(post, code) {
+  const sc = { match: 0, check: 0, differs: 0, total: 0 };
+  for (const d of S.cb.fields) { const k = post?.key?.[d.field]; if (!k) continue; sc[cmpCell(d, code.fields[d.field], k, code).v]++; sc.total++; }
+  return sc;
+}
+function renderCompare(post) {
+  if (!post.key) return el("section", { class: "pane form", "aria-label": "Comparison with the key" }, el("div", { class: "banner info", text: "Opening the answer key…" }));
+  const code = S.draft, sc = score(post, code), pane = el("section", { class: "pane form", "aria-label": "Comparison with the key" });
+  pane.append(el("div", { class: "form-head" }, el("span", { class: "section-title", text: post.label ? `Answer key · ${post.label}` : "Answer key" }), el("span", { class: "savestate", text: `Attempt ${code.attempt || 1}` })));
+  pane.append(el("div", { class: `banner ${sc.differs ? "info" : "ok"}` }, `${sc.match} of ${sc.total} fields match the key. `,
+    sc.check ? `${sc.check} free-text answer${sc.check > 1 ? "s" : ""} to compare by eye: the wording can differ, the meaning should not. ` : "",
+    sc.differs ? `${sc.differs} differ${sc.differs > 1 ? "" : "s"}; read why under each.` : ""));
+  if (post.takeaways?.length) pane.append(el("div", { class: "banner" }, el("b", { text: "What this post teaches" }), el("ul", { class: "takeaways" }, post.takeaways.map(t => el("li", { text: t })))));
+  pane.append(el("label", { class: "msg" }, el("input", { type: "checkbox", checked: !!S.cmpOnlyDiff, onchange: e => { S.cmpOnlyDiff = e.target.checked; render(); } }), " Show only fields that differ or need comparing"));
+  const label = { match: ["agreed", "Matches"], check: ["review", "Compare wording"], differs: ["flagged", "Differs"] };
+  let phase = null;
+  for (const d of S.cb.fields) {
+    const k = post.key?.[d.field]; if (!k) continue;
+    const { v, m } = cmpCell(d, code.fields[d.field], k, code);
+    if (S.cmpOnlyDiff && v === "match") continue;
+    if (d.phase !== phase) { phase = d.phase; pane.append(el("div", { class: "phase", style: `--pc:${PHASE_COLOR[phase]}`, text: S.cb.phases.find(p => p.id === phase).title })); }
+    const f = d.field, cell = el("div", { class: "cell", style: `--pc:${PHASE_COLOR[d.phase]}` });
+    cell.append(el("div", { class: "cell-top" }, el("span", { class: "fname", text: f }), el("span", { class: `chip ${label[v][0]}`, text: label[v][1] }),
+      el("button", { class: "info", "aria-expanded": String(S.openDefs.has(f)), "aria-label": `Definition of ${f}`, title: "Definition", text: "i", onclick: () => { S.openDefs.has(f) ? S.openDefs.delete(f) : S.openDefs.add(f); render(); } })));
+    if (S.openDefs.has(f)) cell.append(defBox(d));
+    cell.append(el("div", { class: "cmp" }, el("div", {}, el("div", { class: "cmp-h", text: "You" }), answerList(m)), el("div", {}, el("div", { class: "cmp-h", text: "Key" }), answerList(k))));
+    cell.append(el("p", { class: "why", text: k.why }));
+    if (k.quote) cell.append(el("div", { class: "row" }, el("button", { class: "btn", onclick: () => highlight(k.quote), text: "Show the key's quote" })));
+    pane.append(cell);
+  }
+  const list = tutorialPosts(), next = list[list.findIndex(p => p.id === post.id) + 1];
+  pane.append(el("div", { class: "footer-actions" }, el("button", { class: "btn", onclick: recode, text: "Code it again" }), el("span", { class: "spacer" }),
+    next ? el("button", { class: "btn primary", onclick: () => openPost(next.id), text: "Next tutorial post" }) : el("span", { class: "msg ok", text: "Last tutorial post. The Code tab has the real samples once they are loaded." })));
+  return pane;
+}
+async function recode() {
+  S.draft = { post_id: S.current, sample: "tutorial", coder: S.me, schema_version: S.cb.schema_version, state: "draft", fields: blankFields(), seconds_spent: 0, started_at: null, attempt: (S.draft.attempt || 1) + 1 };
+  S.activeSince = Date.now(); S.dirty = true; S.seq = (S.seq || 0) + 1; await saveCode(); render();
+}
+
+// ---------- review ----------
+function renderReview(post) {
+  const code = S.codes.get(post.id), pane = el("section", { class: "pane form", "aria-label": "Review" });
+  const r = S.rdraft || { post_id: post.id, sample: post.sample, reviewer: S.me, state: "in_review", items: {}, created_at: null };
+  S.rdraft = r;
+  const done = r.state === "agreed";
+  const editable = canReview() && !done;
+  pane.append(el("div", { class: "form-head" }, el("span", { class: "section-title", text: "Check each answer against the post" }), el("span", { class: "savestate", id: "rSaveState", text: S.reviews.has(post.id) ? "Saved" : "Not started" })));
+  if (code.coder && code.coder === S.me) pane.append(el("div", { class: "banner bad", text: "You coded this post. The review should be done by a different person." }));
+  if (code.note?.trim()) pane.append(el("div", { class: "banner coder-note" }, el("b", { text: "Coder's note" }), el("p", { text: code.note })));
+  if (done) pane.append(el("div", { class: "banner ok", text: `Agreed ${r.agreed_at ? new Date(r.agreed_at).toLocaleString() : ""}. Reopen it to change anything.` }));
+  let phase = null;
+  for (const d of S.cb.fields) {
+    if (d.phase !== phase) { phase = d.phase; pane.append(el("div", { class: "phase", style: `--pc:${PHASE_COLOR[phase]}`, text: S.cb.phases.find(p => p.id === phase).title })); }
+    pane.append(reviewCell(d, code, r, post, editable));
+  }
+  const items = S.cb.fields.map(d => r.items[d.field]);
+  const unchecked = items.filter(i => !i).length, open = items.filter(i => i && i.verdict === "flag" && !i.resolved).length;
+  const foot = el("div", { class: "footer-actions" });
+  if (!done) {
+    foot.append(el("button", { class: "btn ok", disabled: !editable || !unchecked, onclick: () => { for (const d of S.cb.fields) if (!r.items[d.field]) r.items[d.field] = { verdict: "agree", resolved: false, resolution: null, thread: [] }; saveReview(); }, text: `Agree with ${unchecked} unchecked` }),
+      el("label", { class: "msg" }, el("input", { type: "checkbox", disabled: !editable, checked: r.state === "escalated", onchange: e => { r.state = e.target.checked ? "escalated" : "in_review"; saveReview(); } }), " Escalate to supervisor"),
+      el("span", { class: "spacer" }),
+      el("span", { class: unchecked || open ? "msg bad" : "msg ok", text: unchecked ? `${unchecked} unchecked` : open ? `${open} flagged, unresolved` : "All agreed or resolved" }),
+      el("button", { class: "btn primary", disabled: !editable || unchecked > 0 || open > 0, onclick: () => { r.state = "agreed"; r.agreed_at = nowIso(); saveReview(); }, text: "Mark post agreed" }));
+  } else if (canReview()) foot.append(el("span", { class: "spacer" }), el("button", { class: "btn", onclick: () => { r.state = "in_review"; r.agreed_at = null; saveReview(); }, text: "Reopen review" }));
+  pane.append(foot);
+  return pane;
+}
+function reviewCell(d, code, r, post, editable) {
+  const f = d.field, c = code.fields[f], it = r.items[f];
+  const cell = el("div", { class: `cell${!it ? " untouched" : ""}`, style: `--pc:${PHASE_COLOR[d.phase]}` });
+  cell.append(el("div", { class: "cell-top" }, el("span", { class: "fname", text: f }), el("span", { class: "ftag", text: d.cell.replace(/_/g, " ") }),
+    el("button", { class: "info", "aria-expanded": String(S.openDefs.has(f)), "aria-label": `Definition of ${f}`, title: "Definition", text: "i", onclick: () => { S.openDefs.has(f) ? S.openDefs.delete(f) : S.openDefs.add(f); render(); } })));
+  if (S.openDefs.has(f)) cell.append(defBox(d));
+  cell.append(answerList(c));
+  if (c.quote) cell.querySelector(".q")?.addEventListener("mouseenter", () => highlight(c.quote));
+  cell.append(el("div", { class: "row" },
+    el("button", { class: "btn ok", "aria-pressed": String(it?.verdict === "agree"), disabled: !editable, onclick: () => { r.items[f] = { verdict: "agree", resolved: false, resolution: null, thread: it?.thread || [] }; saveReview(); }, text: "Agree" }),
+    el("button", { class: "btn bad", "aria-pressed": String(it?.verdict === "flag"), disabled: !editable, onclick: () => { r.items[f] = { verdict: "flag", resolved: false, resolution: null, thread: it?.thread || [] }; S.rdirty = true; saveReview(); }, text: "Flag" }),
+    c.quote ? el("button", { class: "btn", onclick: () => highlight(c.quote), text: "Show quote" }) : null));
+  if (it?.verdict === "flag") { cell.append(threadBox(f, it, r, "reviewer")); cell.append(resolutionBox(d, c, it, r, post, editable)); }
+  return cell;
+}
+function answerList(c) {
+  return el("dl", { class: "answer" }, el("dt", { text: "status" }), el("dd", { class: "mono", text: c.status || "—" }),
+    el("dt", { text: "value" }), el("dd", { class: "mono", text: Array.isArray(c.value) ? c.value.join(", ") : (c.value ?? "—") }),
+    el("dt", { text: "quote" }), el("dd", { class: "q", text: c.quote ? `“${c.quote}”` : "—" }));
+}
+function threadBox(f, it, r, role) {
+  const box = el("div", { class: "thread" });
+  for (const m of it.thread || []) box.append(el("div", { class: "m" }, el("b", { text: m.role === "reviewer" ? "Reviewer" : "Coder" }), m.text));
+  if ((role === "reviewer" ? canReview() : S.role === "coder" || isAdmin()) && r.state !== "agreed") {
+    const t = el("textarea", { rows: "2", placeholder: role === "reviewer" ? "Why is this flagged? What should it be?" : "Reply to the reviewer" });
+    box.append(el("div", { class: "qrow" }, t, el("button", { class: "btn", onclick: async () => { const text = t.value.trim(); if (!text) return;
+      const thread = [...(it.thread || []), { by: S.me, role, text, at: nowIso() }];
+      if (role === "reviewer") { it.thread = thread; saveReview(); }
+      else { try { await S.db.doc("reviews/" + r.post_id).update({ items: { [f]: { thread } }, updated_at: nowIso() }); } catch (e) { showNotice(`Couldn't send the reply (${e?.code || "error"}).`); } }
+    }, text: "Send" })));
+  }
+  return box;
+}
+function resolutionBox(d, c, it, r, post, editable) {
+  const res = it.resolution || clone(c);
+  const box = el("div", { class: "resolution" }, el("span", { class: "section-title", text: "Agreed answer" }));
+  const seg = el("div", { class: "seg", role: "group", "aria-label": "Agreed status" });
+  for (const s of S.cb.statuses) seg.append(el("button", { "data-s": s, "aria-pressed": String(res.status === s), disabled: !editable || (s === "not_stated" && d.field === S.cb.rules.audit_field), text: s.replace("_", " "),
+    onclick: () => { res.status = s; if (s === "not_stated") { res.value = null; res.quote = ""; } it.resolution = res; it.resolved = false; saveReview(); } }));
+  box.append(seg);
+  if (res.status && res.status !== "not_stated") {
+    box.append(valueInput(d, res.value, editable, (v, quiet) => { res.value = v; it.resolution = res; it.resolved = false; S.rdirty = true; S.rseq = (S.rseq || 0) + 1; if (!quiet) saveReview(); }, "rv-" + d.field));
+    const q = el("textarea", { rows: "2", placeholder: "Agreed quote, word for word", disabled: !editable }); q.value = res.quote || "";
+    q.addEventListener("input", () => { res.quote = q.value; it.resolution = res; it.resolved = false; S.rdirty = true; S.rseq = (S.rseq || 0) + 1; });
+    q.addEventListener("change", () => saveReview());
+    box.append(el("div", { class: "qrow" }, q, el("button", { class: "btn", disabled: !editable, onclick: () => { if (S.lastSel) { res.quote = S.lastSel; it.resolution = res; saveReview(); } }, text: "Use selection" })));
+  }
+  const fake = { fields: { ...consensus(S.codes.get(post.id), r), [d.field]: res } };
+  const probs = cellProblems(d.field, res, fake, post);
+  for (const p of probs) box.append(el("span", { class: "msg bad", text: p }));
+  box.append(el("div", { class: "row" }, el("label", { class: "msg" }, el("input", { type: "checkbox", disabled: !editable || probs.length > 0, checked: !!it.resolved,
+    onchange: e => { it.resolution = res; it.resolved = e.target.checked; saveReview(); } }), " Resolved: coder and reviewer agree on this answer")));
+  return box;
+}
+let rSaving = false, rPending = false;
+async function saveReview() {
+  const r = S.rdraft; if (!r || !canReview()) return;
+  if (rSaving) { rPending = true; return; }
+  rSaving = true; S.rdirty = true; const rseq = S.rseq = (S.rseq || 0) + 1;
+  const now = nowIso(); r.reviewer = r.reviewer || S.me; r.updated_at = now; r.created_at = r.created_at || now;
+  try {
+    const ref = S.db.doc("reviews/" + r.post_id);
+    // merge per field so a coder's reply arriving meanwhile is not overwritten
+    if (S.reviews.has(r.post_id)) { const remote = S.reviews.get(r.post_id); const items = {};
+      for (const [f, it] of Object.entries(r.items)) { const rt = remote.items?.[f]?.thread || []; const lt = it.thread || [];
+        items[f] = { ...it, thread: rt.length > lt.length ? rt : lt }; it.thread = items[f].thread; }
+      await ref.update({ ...r, items }); }
+    else await ref.set(clone(r));
+    if (S.rseq === rseq) S.rdirty = false;
+  } catch (e) { showNotice(`Couldn't save the review (${e?.code || "error"}). Your changes are still on screen.`); }
+  finally { rSaving = false; if (rPending) { rPending = false; saveReview(); } else requestRender(); }
+}
+
+// ---------- progress ----------
+function renderProgress(main, hasSamples) {
+  main.className = "single";
+  if (!hasSamples) { main.replaceChildren(el("div", { class: "prog" }, el("p", { class: "muted", text: "No coding samples loaded yet." }), tutorialResults())); return; }
+  const ps = postsInSample(), counts = { none: 0, draft: 0, submitted: 0, review: 0, flagged: 0, escalated: 0, agreed: 0 };
+  for (const p of ps) counts[postState(p.id)[0]]++;
+  const times = ps.map(p => S.codes.get(p.id)).filter(c => c?.state === "submitted" && c.seconds_spent).map(c => c.seconds_spent / 60).sort((a, b) => a - b);
+  const median = times.length ? (times.length % 2 ? times[(times.length - 1) / 2] : (times[times.length / 2 - 1] + times[times.length / 2]) / 2) : null;
+  const flags = {}; for (const p of ps) for (const [f, it] of Object.entries(S.reviews.get(p.id)?.items || {})) if (it.verdict === "flag") flags[f] = (flags[f] || 0) + 1;
+  const wrap = el("div", { class: "prog" }, el("h2", { class: "section-title", text: `Sample: ${S.sample} · ${ps.length} posts` }));
+  const stat = (n, l) => el("div", { class: "stat" }, el("b", { text: String(n) }), el("span", { text: l }));
+  wrap.append(el("div", { class: "stats" }, stat(counts.none, "not started"), stat(counts.draft, "draft"), stat(counts.submitted, "awaiting review"),
+    stat(counts.review + counts.flagged, "in review"), stat(counts.escalated, "escalated"), stat(counts.agreed, "agreed"),
+    stat(median == null ? "—" : median.toFixed(1), "median minutes per post")));
+  const fl = Object.entries(flags).sort((a, b) => b[1] - a[1]);
+  wrap.append(el("h2", { class: "section-title", text: "Fields flagged most in review" }));
+  wrap.append(fl.length ? el("div", { class: "tablewrap" }, el("table", {}, el("thead", {}, el("tr", {}, el("th", { text: "Field" }), el("th", { text: "Posts flagged" }))),
+    el("tbody", {}, fl.map(([f, n]) => el("tr", {}, el("td", { class: "mono", text: f }), el("td", { class: "num", text: String(n) })))))) : el("p", { class: "muted", text: "No flags yet." }));
+  wrap.append(el("h2", { class: "section-title", style: "margin-top:22px", text: "Posts" }));
+  wrap.append(el("div", { class: "tablewrap" }, el("table", {}, el("thead", {}, el("tr", {}, ["#", "Post", "State", "Coding min", "Flags"].map(h => el("th", { text: h })))),
+    el("tbody", {}, ps.map(p => { const [cls, label] = postState(p.id), c = S.codes.get(p.id), r = S.reviews.get(p.id);
+      const nf = Object.values(r?.items || {}).filter(i => i.verdict === "flag").length;
+      return el("tr", {}, el("td", { class: "num", text: String(p.order || "") }), el("td", { text: (p.title || "").slice(0, 70) }), el("td", {}, el("span", { class: `chip ${cls}`, text: label })),
+        el("td", { class: "num", text: c?.seconds_spent ? (c.seconds_spent / 60).toFixed(1) : "—" }), el("td", { class: "num", text: nf ? String(nf) : "—" })); })))));
+  const dlRow = el("div", { class: "row", style: "margin-top:16px" }, el("button", { class: "btn", id: "dlBtn", onclick: exportAgreed, text: "Download agreed coding (JSON)" }), el("span", { class: "msg muted", id: "dlMsg", text: "Agreed posts only: the coder's answers with every resolved flag applied." }));
+  wrap.append(dlRow, tutorialResults());
+  main.replaceChildren(wrap);
+}
+function tutorialResults() {
+  const box = el("div", {}, el("h2", { class: "section-title", style: "margin-top:26px", text: "Tutorial" }));
+  const n = S.tposts.size, by = new Map();
+  for (const c of S.tcodes.values()) { const p = tpost(c.post_id); if (c.state !== "submitted" || !p?.key) continue;
+    const sc = score(p, c), r = by.get(c.coder) || { posts: 0, match: 0, check: 0, total: 0 };
+    r.posts++; r.match += sc.match; r.check += sc.check; r.total += sc.total; by.set(c.coder, r); }
+  if (!by.size) { box.append(el("p", { class: "muted", text: n ? "Nobody has checked a tutorial post against the key yet." : "No tutorial loaded." })); return box; }
+  const rows = [...by.entries()];
+  box.append(el("div", { class: "tablewrap" }, el("table", {}, el("thead", {}, el("tr", {}, ["Person", "Posts checked", "Fields matching the key", "Free text to compare"].map(h => el("th", { text: h })))),
+    el("tbody", {}, rows.map(([id, r]) => el("tr", {}, el("td", { "data-uid": id, text: id === S.me ? "You" : "Someone" }), el("td", { class: "num", text: `${r.posts} of ${n}` }),
+      el("td", { class: "num", text: `${Math.round(100 * r.match / r.total)}%` }), el("td", { class: "num", text: String(r.check) })))))));
+  box.append(el("p", { class: "msg muted", text: "Latest attempt per post. Free-text answers are compared by eye, not scored." }));
+  S.user?.profiles(rows.map(([id]) => id)).then(ps => { for (const td of box.querySelectorAll("td[data-uid]")) { const name = ps?.[td.dataset.uid]?.name; if (name) td.textContent = td.dataset.uid === S.me ? `${name} (you)` : name; } }).catch(() => {});
+  return box;
+}
+async function exportAgreed() {
+  const rows = postsInSample().filter(p => S.reviews.get(p.id)?.state === "agreed").map(p => { const c = S.codes.get(p.id), r = S.reviews.get(p.id);
+    return { post_id: p.id, sample: p.sample, schema_version: c.schema_version, coder: c.coder, reviewer: r.reviewer, seconds_spent: c.seconds_spent, agreed_at: r.agreed_at, coder_note: c.note || "",
+      fields: consensus(c, r), flags: Object.fromEntries(Object.entries(r.items).filter(([, i]) => i.verdict === "flag")) }; });
+  S.be.download(`agreed_coding_${S.sample}.json`, JSON.stringify(rows, null, 2)); $("dlMsg").textContent = `Downloaded ${rows.length} agreed posts.`;
+}
+
+// ---------- admin (study lead only; the store's rules refuse these writes to anyone else) ----------
+const ROLE_HELP = { coder: "codes posts and does the tutorial", reviewer: "reviews coded posts and does the tutorial", admin: "everything, including this tab" };
+const BACKUP_COLLECTIONS = ["roles", "people", "config", "posts", "tutorial", "tutorial_keys", "tutorial_codes", "codes", "reviews"];
+let pendingLoad = null;
+function renderAdmin(main) {
+  main.className = "single";
+  const wrap = el("div", { class: "prog" });
+
+  const people = el("section", { class: "admin-sec" }, el("h2", { class: "section-title", text: "People" }),
+    el("p", { class: "muted", text: "Only these emails can sign in and see anything. People sign in with a link emailed to them, or with Google if the address is a Google account. Removing someone stops their access at once; their coding is kept." }));
+  const rows = [...S.roles.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  people.append(el("div", { class: "tablewrap" }, el("table", {}, el("thead", {}, el("tr", {}, ["Email", "Role", ""].map(h => el("th", { text: h })))),
+    el("tbody", {}, rows.map(([email, r]) => el("tr", {}, el("td", { text: email }), el("td", { text: r.role }),
+      el("td", {}, email === S.be.email ? el("span", { class: "msg muted", text: "you" }) : el("button", { class: "btn bad", onclick: () => removePerson(email), text: "Remove" }))))))));
+  const em = el("input", { class: "field-input", type: "email", id: "addEmail", placeholder: "name@example.org", "aria-label": "Email to add", style: "flex:1 1 240px" });
+  const rs = el("select", { class: "field-input", id: "addRole", "aria-label": "Role" }, ["coder", "reviewer", "admin"].map(r => el("option", { value: r, text: `${r}: ${ROLE_HELP[r]}` })));
+  people.append(el("div", { class: "row", style: "margin-top:10px" }, em, rs, el("button", { class: "btn primary", onclick: () => addPerson(em.value, rs.value), text: "Add" })),
+    el("p", { class: "msg", id: "addMsg" }));
+
+  const load = el("section", { class: "admin-sec" }, el("h2", { class: "section-title", text: "Load files" }),
+    el("p", { class: "muted", text: "Choose the JSON files that export_coding_app.py writes under reports/coding_app/: codebook.json, the files in tutorial/, and a sample's files in posts/<sample>/. Loading a file again replaces it. Coding and reviews are never touched." }));
+  load.append(el("div", { class: "row" },
+    el("label", { class: "msg" }, "Files ", el("input", { type: "file", multiple: true, accept: ".json,application/json", onchange: e => readFiles(e.target.files) })),
+    el("label", { class: "msg" }, "or a whole folder ", el("input", { type: "file", webkitdirectory: true, onchange: e => readFiles(e.target.files) }))));
+  if (pendingLoad) {
+    const box = el("div", { class: "banner info", style: "margin-top:10px" }, el("b", { text: "Ready to load" }), el("ul", { class: "takeaways" }, pendingLoad.lines.map(t => el("li", { text: t }))));
+    for (const w of pendingLoad.warnings) box.append(el("p", { class: "msg warn", text: w }));
+    box.append(el("div", { class: "row", style: "margin-top:10px" }, el("button", { class: "btn primary", disabled: !pendingLoad.ops.length, onclick: applyLoad, text: `Load ${pendingLoad.ops.length} documents` }),
+      el("button", { class: "btn", onclick: () => { pendingLoad = null; render(); }, text: "Cancel" })));
+    load.append(box);
+  }
+  load.append(el("p", { class: "msg", id: "loadMsg" }));
+
+  const bk = el("section", { class: "admin-sec" }, el("h2", { class: "section-title", text: "Backup" }),
+    el("p", { class: "muted", text: "Downloads everything in the store as one JSON file: the list of people, posts, codebook, tutorial, and all coding and reviews. Worth doing after each coding session." }),
+    el("div", { class: "row" }, el("button", { class: "btn", onclick: backup, text: "Download a full backup" }), el("span", { class: "msg", id: "bkMsg" })));
+
+  wrap.append(people, load, bk);
+  main.replaceChildren(wrap);
+}
+async function addPerson(raw, role) {
+  const email = String(raw || "").trim().toLowerCase(), msg = $("addMsg");
+  if (!/^[^@\s/]+@[^@\s/]+\.[^@\s/]+$/.test(email)) { msg.className = "msg bad"; msg.textContent = "That doesn't look like an email address."; return; }
+  try { await S.db.doc("roles/" + email).set({ role, added_at: nowIso() }); msg.className = "msg ok"; msg.textContent = `Added ${email} as ${role}. Send them the page's address; they sign in with this email.`; $("addEmail").value = ""; }
+  catch (e) { msg.className = "msg bad"; msg.textContent = `Couldn't add them (${e?.code || "error"}).`; }
+}
+async function removePerson(email) {
+  if (!window.confirm(`Remove ${email}? They lose access at once. Their coding stays.`)) return;
+  try { await S.db.doc("roles/" + email).delete(); } catch (e) { showNotice(`Couldn't remove them (${e?.code || "error"}).`); }
+}
+async function readFiles(fileList) {
+  const ops = [], lines = [], warnings = [], skipped = [], posts = {}, tut = [];
+  let cbv = null;
+  for (const f of [...fileList].filter(f => f.name.endsWith(".json"))) {
+    let o; try { o = JSON.parse(await f.text()); } catch { skipped.push(f.name); continue; }
+    if (Array.isArray(o.fields) && o.schema_version && o.phases) { cbv = o.schema_version; ops.push({ op: "set", path: "config/codebook", data: o }); }
+    else if (o.sample === "tutorial" && o.key && o.id) {
+      ops.push({ op: "set", path: "tutorial/" + o.id, data: { id: o.id, order: o.order, title: o.title, selftext: o.selftext, sample: "tutorial", schema_version: o.schema_version } });
+      ops.push({ op: "set", path: "tutorial_keys/" + o.id, data: { label: o.label, takeaways: o.takeaways || [], key: o.key, schema_version: o.schema_version } });
+      tut.push(o.id);
+    }
+    else if (o.id && typeof o.selftext === "string" && o.sample && o.sample !== "tutorial") {
+      ops.push({ op: "set", path: "posts/" + o.id, data: { id: o.id, title: o.title || "", selftext: o.selftext, permalink: o.permalink || "", sample: o.sample, order: o.order || 0 } });
+      (posts[o.sample] = posts[o.sample] || []).push(o.id);
+    }
+    else skipped.push(f.name);
+  }
+  if (cbv) { lines.push(`Codebook, schema ${cbv}`); if (S.cb && S.cb.schema_version !== cbv) warnings.push(`This replaces codebook ${S.cb.schema_version} with ${cbv}. Coding already saved keeps the version it was made under.`); }
+  if (tut.length) lines.push(`${tut.length} tutorial posts with their answer keys`);
+  for (const [s, ids] of Object.entries(posts)) {
+    lines.push(`${ids.length} posts in sample "${s}"`);
+    const again = ids.filter(id => S.posts.has(id)).length, coded = ids.filter(id => S.codes.has(id)).length;
+    if (again) warnings.push(`${again} of the "${s}" posts are already loaded and will be replaced.${coded ? ` ${coded} of them already have coding, which is kept.` : ""}`);
+  }
+  if (skipped.length) warnings.push(`Skipped ${skipped.length} file${skipped.length > 1 ? "s" : ""} that aren't a codebook, tutorial post or sample post: ${skipped.slice(0, 5).join(", ")}${skipped.length > 5 ? "…" : ""}`);
+  if (!ops.length) lines.push("Nothing to load in these files.");
+  pendingLoad = { ops, lines, warnings }; render();
+}
+async function applyLoad() {
+  const n = pendingLoad.ops.length;
+  try { await S.db.batch(pendingLoad.ops); pendingLoad = null; render(); $("loadMsg").className = "msg ok"; $("loadMsg").textContent = `Loaded ${n} documents.`; }
+  catch (e) { $("loadMsg").className = "msg bad"; $("loadMsg").textContent = `Loading failed (${e?.code || "error"}). Nothing was changed if the error came before the first batch.`; }
+}
+async function backup() {
+  const out = { exported_at: nowIso(), schema_version: S.cb?.schema_version || null, collections: {} };
+  try {
+    for (const n of BACKUP_COLLECTIONS) out.collections[n] = Object.fromEntries((await S.db.collection(n).get()).docs.map(d => [d.id, d.data()]));
+    S.be.download(`coding_backup_${nowIso().slice(0, 16).replace(/[:T]/g, "-")}.json`, JSON.stringify(out, null, 2));
+    $("bkMsg").className = "msg ok"; $("bkMsg").textContent = `Downloaded ${Object.values(out.collections).reduce((a, c) => a + Object.keys(c).length, 0)} documents.`;
+  } catch (e) { $("bkMsg").className = "msg bad"; $("bkMsg").textContent = `Backup failed (${e?.code || "error"}).`; }
+}
+
+boot();
+})();
+</script>
+</body>
+</html>

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
 Export the codebook and a human-coding sample as the JSON documents the coding app
-(a claude.ai artifact) reads from its database.
+(coding_app/, Firebase) reads from its database.
 
   codebook.json            -> config/codebook   (fields, values, notes, rules; from schema.py)
-  tutorial/<id>.json       -> tutorial/<id>     (constructed practice posts + answer key; from tutorial.json)
+  tutorial/<id>.json       -> tutorial/<id> + tutorial_keys/<id>  (constructed posts; the key is stored apart)
   posts/<sample>/<id>.json -> posts/<id>        (title, body, permalink only)
 
 The posts carry NO model output and NO Phase 1 labels or rationale, so the coder
 stays blind. The files hold full post text, so they are written under reports/
-(git-ignored) and loaded into the app with ArtifactData batch writes (50 per batch).
+(git-ignored) and loaded by the study lead in the app's Admin tab.
 The tutorial posts are invented, so their source lives in the repo (tutorial.json); the
-app reveals each key only after the person has coded that post.
+app's access rules open each key only after the person has submitted that post.
 """
 
 import argparse, json

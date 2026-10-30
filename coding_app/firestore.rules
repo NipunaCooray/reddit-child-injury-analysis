@@ -1,0 +1,66 @@
+rules_version = '2';
+// Access for the human coding app. Nobody gets anything unless their email is in roles/.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function roleDoc() { return /databases/$(database)/documents/roles/$(request.auth.token.email.lower()); }
+    function member() { return signedIn() && exists(roleDoc()); }
+    function hasRole(rs) { return member() && get(roleDoc()).data.role in rs; }
+    function admin() { return hasRole(['admin']); }
+
+    // roles/<lower-case email> = {role: admin | coder | reviewer}. The first admin is added in the Firebase console.
+    match /roles/{email} {
+      allow read: if admin() || (signedIn() && email == request.auth.token.email.lower());
+      allow write: if admin() && request.resource.data.role in ['admin', 'coder', 'reviewer'];
+      allow delete: if admin();
+    }
+    // Display names, so Progress can show who did what
+    match /people/{uid} {
+      allow read: if member();
+      allow write: if member() && uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['name', 'email', 'updated_at']);
+    }
+    // Loaded by the study lead; read by everyone on the list
+    match /config/{id} { allow read: if member(); allow write: if admin(); }
+    match /posts/{id} { allow read: if member(); allow write: if admin(); }
+    match /tutorial/{id} { allow read: if member(); allow write: if admin(); }
+
+    // The answer key opens only once this person has submitted that tutorial post
+    match /tutorial_keys/{id} {
+      allow read: if admin() || (member()
+        && get(/databases/$(database)/documents/tutorial_codes/$(id + '--' + request.auth.uid)).data.state == 'submitted');
+      allow write: if admin();
+    }
+    match /tutorial_codes/{docId} {
+      allow read: if member();
+      allow create, update: if member()
+        && docId == request.resource.data.post_id + '--' + request.auth.uid
+        && request.resource.data.coder == request.auth.uid;
+      allow delete: if admin();
+    }
+
+    // One coder per post; the coding is locked once the review is agreed
+    match /codes/{postId} {
+      function reviewAgreed() {
+        return exists(/databases/$(database)/documents/reviews/$(postId))
+          && get(/databases/$(database)/documents/reviews/$(postId)).data.state == 'agreed';
+      }
+      allow read: if member();
+      allow create: if hasRole(['coder', 'admin'])
+        && request.resource.data.coder == request.auth.uid && request.resource.data.post_id == postId;
+      allow update: if hasRole(['coder', 'admin'])
+        && resource.data.coder == request.auth.uid && request.resource.data.coder == request.auth.uid
+        && !reviewAgreed();
+      allow delete: if admin();
+    }
+    // The reviewer writes the review; the coder may only add to the note threads
+    match /reviews/{postId} {
+      allow read: if member();
+      allow create: if hasRole(['reviewer', 'admin']) && request.resource.data.post_id == postId;
+      allow update: if hasRole(['reviewer', 'admin'])
+        || (hasRole(['coder']) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items', 'updated_at'])
+            && request.resource.data.state == resource.data.state);
+      allow delete: if admin();
+    }
+  }
+}
