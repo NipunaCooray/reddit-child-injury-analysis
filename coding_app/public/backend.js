@@ -12,6 +12,9 @@ import {
 
 const LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
 const EMAIL_KEY = "hc-signin-email";
+// Sign-in links always return to the project's own address: a page seen through a proxy,
+// translator or link wrapper has another origin, which Firebase refuses (unauthorized-continue-uri)
+let HOME = null;
 const main = document.getElementById("main");
 const el = (tag, attrs = {}, ...kids) => { const n = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) { if (v == null || v === false) continue;
@@ -71,14 +74,16 @@ function signInScreen(auth, note) {
     const addr = email.value.trim().toLowerCase();
     if (!addr.includes("@")) { msg.className = "msg bad"; msg.textContent = "Enter your email address."; return; }
     try {
-      await sendSignInLinkToEmail(auth, addr, { url: location.origin + location.pathname, handleCodeInApp: true });
+      await sendSignInLinkToEmail(auth, addr, { url: HOME, handleCodeInApp: true });
       localStorage.setItem(EMAIL_KEY, addr);
       msg.className = "msg ok"; msg.textContent = `Sign-in link sent to ${addr}. Open it on this device. If it hasn't arrived in a few minutes, check your junk folder.`;
     } catch (e) { msg.className = "msg bad"; msg.textContent = `Couldn't send the link (${e?.code || "error"}).`; }
   };
   email.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
+  const elsewhere = !LOCAL && !location.hostname.endsWith(".web.app") && !location.hostname.endsWith(".firebaseapp.com");
   screen(el("h2", { text: "Sign in" }),
     el("p", { class: "muted", text: "This page is for the people on the study's coding team. Use the email address the study lead added." }),
+    elsewhere ? el("p", { class: "msg bad" }, `You're viewing this page through another address (${location.hostname}). Google sign-in won't work here; open `, el("a", { href: HOME, text: HOME }), " directly. An emailed link will still take you there.") : null,
     el("div", { class: "signin" }, email, el("button", { class: "btn primary", onclick: send, text: "Email me a sign-in link" }),
       el("button", { class: "btn", onclick: () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => { msg.className = "msg bad"; msg.textContent = `Google sign-in didn't complete (${e?.code || "error"}).`; }), text: "Sign in with Google" }),
       msg));
@@ -96,7 +101,7 @@ async function finishEmailLink(auth) {
 
 async function start() {
   let app;
-  try { app = initializeApp(await config()); }
+  try { const cfg = await config(); HOME = LOCAL ? location.origin + location.pathname : `https://${cfg.projectId}.web.app/`; app = initializeApp(cfg); }
   catch { screen(el("h2", { text: "This page isn't set up yet" }), el("p", { class: "muted", text: "The Firebase configuration couldn't be loaded." })); return; }
   const auth = getAuth(app);
   const fs = initializeFirestore(app, { ignoreUndefinedProperties: true });
