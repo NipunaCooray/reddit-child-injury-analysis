@@ -132,9 +132,19 @@ Extraction uses the post title and body. Comment threads were never collected (t
 
 Phase 2 trusts Phase 1's `is_injury_event`, so Phase 1's errors flow straight into the extraction. A 25th field, `injury_event_check`, sits outside the 24 extraction fields. It records the extraction model's own judgement (`actual_injury_event` / `suspected_injury_event` / `near_miss` / `not_an_injury_event` / `unclear`), using Phase 1's definition of an injury event, with an evidence span like every other field. The prompt never says that Phase 1 accepted the post, so the check is independent. On these posts, `not_an_injury_event` marks a candidate Phase 1 false positive.
 
-`near_miss` (from v1.4) is a real hazardous incident with no injury and none suspected: caught before falling, a pebble taken out of the mouth, pulled out of the pool. Phase 1's prompt defines an injury event as a *harmful* incident but never mentions near misses, and it kept some. Before v1.4 they were lumped with off-topic posts under `not_an_injury_event`. They are reported separately, not counted as Phase 1 errors. Near misses are included in the analysis (study decision, 2026-11-04).
+`near_miss` (from v1.4) is a real hazardous incident with no injury and none suspected: caught before falling, a pebble taken out of the mouth, pulled out of the pool. Phase 1's prompt defines an injury event as a *harmful* incident but never mentions near misses, and it kept some. Before v1.4 they were lumped with off-topic posts under `not_an_injury_event`. They are reported separately, not counted as Phase 1 errors. Near misses are included in the analysis (study decision, 2026-11-04) and reported as their own category, not pooled with injury events (2026-11-11).
 
 From v1.5 the line between the two is the hazard reaching the child, whatever the outcome. A stated ingestion or excess dose with no symptoms is `actual_injury_event`, and so is submersion with coughing, spluttering, blue or limp (non-fatal drowning under the WHO 2002 definition). A face under water, lifted out at once with no distress, is `near_miss`. Worry alone is not suspicion, and a side effect of a correctly given dose is `not_an_injury_event`. Phase 1's definition never decided these cases, so they are settled here and apply to the Phase 1 audit as well.
+
+From v1.6 the definition states the study's scope, which Phase 1's prompt already used: an **unintentional (accidental)** incident to a **child under 5**. The following are `not_an_injury_event`:
+
+- intentional harm: assault, maltreatment or self-harm
+- a child clearly aged 5 or older (an unstated age is not grounds for exclusion)
+- illness or a medical condition with no external cause, such as a febrile seizure or nappy rash
+
+Harm from another child under 5 (hitting, biting, pushing) counts as unintentional. A child unhurt in an impact that injured only an adult, such as a toddler head-butting a parent, is `near_miss`.
+
+In human coding, a post judged `not_an_injury_event` has every other field left `not_stated`, and the coding app locks them (`HUMAN_SKIP_VALUES`). The model still fills every field, so its audit stays independent of the extraction. Field-level agreement is therefore computed on posts that the human coding treats as events. Agreement on `injury_event_check` itself covers every post.
 
 `validate_extractions.py` prints the audit and writes `audit_disagreements.csv` (candidate false positives and near misses, one row each). These are **candidates**: model disagreement is not a ground-truth error, so a human must read each one before any rate is cited. The audit judgement does not filter or blank the extraction. Excluding non-events from the analysis is a decision to make after the human check.
 

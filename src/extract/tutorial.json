@@ -1,5 +1,5 @@
 {
- "schema_version": "1.5.0",
+ "schema_version": "1.6.0",
  "note": "Constructed tutorial posts for the coding app. Invented for training; not from the corpus. Every key is checked against schema.py by tests/test_extract_schema.py.",
  "rulings": [
   {
@@ -79,8 +79,8 @@
   },
   {
    "post": "tutorial-5-rental",
-   "field": "all event fields",
-   "ruling": "Where there is no incident, the event fields are not_stated even when the post names hazards or new skills."
+   "field": "all other fields",
+   "ruling": "When injury_event_check is not_an_injury_event, every other field is left not stated (from 1.6.0). Out of scope as well: intentional harm, a child clearly aged 5 or older, and illness with no external cause."
   }
  ],
  "posts": [
@@ -928,153 +928,153 @@
    "selftext": "Our 14mo has started pulling up on everything and I've just realised nothing in his room is anchored, the bookshelf and the dresser included. Nothing has happened, but I've read enough posts here to be nervous. We rent and the landlord has said no drilling into the walls. What do people do to secure furniture when you can't drill?",
    "takeaways": [
     "No incident happened, so injury_event_check is not_an_injury_event. It is never not_stated.",
-    "The event fields describe an incident. With no incident they are not_stated, even though the post names hazards (unanchored furniture) and a new skill.",
-    "reason_for_posting is still coded: every post has a purpose."
+    "Decide injury_event_check first. When it is not_an_injury_event, the app locks every other field as not stated, even though this post names hazards (unanchored furniture) and a new skill.",
+    "The same applies to intentional harm (assault, self-harm), a child clearly aged 5 or older, and illness with no external cause: the study covers unintentional injury to children under 5."
    ],
    "key": {
     "activity_when_injured": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "object_involved": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "object_category": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "place_of_occurrence": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "micro_location": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "supervision_status": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "supervisor_activity": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "others_present": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "child_action": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "mechanism_iceci": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "mechanism_detail": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "witnessed": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "presenting_signs": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "first_response": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "help_seeking": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "care_pathway_outcome": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "parent_attributed_cause": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "stated_counterfactual": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "countermeasure_adopted": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "No incident happened, so there is no event for this field to describe."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "developmental_trigger": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "'Started pulling up on everything' is a new skill, but no event is linked to it."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "hazard_state": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "'Nothing in his room is anchored' is a hazard, but hazard_state is the condition at an injury, and there wasn't one."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "fall_height": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "landing_surface": {
      "value": null,
      "status": "not_stated",
      "evidence_span": null,
-     "why": "Locked: mechanism_iceci is not a fall, so the fall-only fields are not stated."
+     "why": "Not coded: the post is not an injury event, so every field except injury_event_check is left not stated."
     },
     "reason_for_posting": {
-     "value": "seeking_prevention_advice",
-     "status": "stated",
-     "evidence_span": "What do people do to secure furniture when you can't drill?",
-     "why": "The post asks for prevention advice outright."
+     "value": null,
+     "status": "not_stated",
+     "evidence_span": null,
+     "why": "Not coded: from 1.6.0, when the post is not an injury event, every other field is left not stated."
     },
     "injury_event_check": {
      "value": "not_an_injury_event",

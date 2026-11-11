@@ -256,8 +256,11 @@ function grounding(quote, post) {
 
 // ---------- codebook helpers ----------
 const fdef = (f) => S.cb.fields.find(x => x.field === f);
+// The coder decides first whether the post is an injury event; a non-event leaves every other field not stated
+const auditFirst = (cb) => ({ ...cb, fields: [...cb.fields.filter(d => d.field === cb.rules.audit_field), ...cb.fields.filter(d => d.field !== cb.rules.audit_field)] });
 const isFall = (code) => S.cb.rules.fall_mechanisms.includes(code?.fields?.mechanism_iceci?.value);
-const locked = (f, code) => S.cb.rules.conditional_fall_fields.includes(f) && !isFall(code);
+const skipped = (code) => (S.cb.rules.skip_values || []).includes(code?.fields?.[S.cb.rules.audit_field]?.value);
+const locked = (f, code) => f !== S.cb.rules.audit_field && (skipped(code) || (S.cb.rules.conditional_fall_fields.includes(f) && !isFall(code)));
 function blankFields() { const o = {}; for (const d of S.cb.fields) o[d.field] = { value: null, status: null, quote: "" }; return o; }
 function cellProblems(f, c, code, post) {
   const d = fdef(f), out = [];
@@ -304,7 +307,7 @@ async function boot() {
   $("tabAdmin").hidden = !isAdmin(); $("tabReview").hidden = !tabAllowed("review");
   S.mode = store.get("mode") || "tutorial"; if (!tabAllowed(S.mode)) S.mode = "tutorial";
   S.sample = store.get("sample");
-  db.doc("config/codebook").onSnapshot(s => { S.cb = s.exists ? s.data() : null; requestRender(); }, dbErr);
+  db.doc("config/codebook").onSnapshot(s => { S.cb = s.exists ? auditFirst(s.data()) : null; requestRender(); }, dbErr);
   db.collection("posts").onSnapshot(s => { S.posts = new Map(s.docs.map(d => [d.id, d.data()])); requestRender(); }, dbErr);
   db.collection("codes").onSnapshot(s => { S.codes = new Map(s.docs.map(d => [d.id, d.data()])); onRemote("code"); }, dbErr);
   db.collection("reviews").onSnapshot(s => { S.reviews = new Map(s.docs.map(d => [d.id, d.data()])); onRemote("review"); }, dbErr);
@@ -467,7 +470,7 @@ function fieldCell(d, code, post, editable, review) {
     el("button", { class: "info", "aria-expanded": String(S.openDefs.has(f)), "aria-label": `Definition of ${f}`, title: "Definition", text: "i", onclick: () => { S.openDefs.has(f) ? S.openDefs.delete(f) : S.openDefs.add(f); render(); } }));
   cell.append(top);
   if (S.openDefs.has(f)) cell.append(defBox(d));
-  if (lock) { cell.append(el("span", { class: "msg muted", text: "Only coded when mechanism_iceci is a fall. Left not stated." })); return cell; }
+  if (lock) { cell.append(el("span", { class: "msg muted", text: skipped(code) ? "Not coded: the post is not an injury event. Left not stated." : "Only coded when mechanism_iceci is a fall. Left not stated." })); return cell; }
   const seg = el("div", { class: "seg", role: "group", "aria-label": `${f} status` });
   for (const s of S.cb.statuses) seg.append(el("button", { "data-s": s, "aria-pressed": String(c.status === s), disabled: !editable || (s === "not_stated" && f === S.cb.rules.audit_field),
     title: S.cb.status_help[s], text: s.replace("_", " "), onclick: () => setCell(f, { status: s }) }));
@@ -537,7 +540,8 @@ async function saveCode() {
   catch (e) { if (e?.code === "permission-denied") showNotice("The store refused to save this. Coding locks once the review is agreed; otherwise ask the study lead to check your role."); else showNotice(`Couldn't save (${e?.code || "error"}). Your changes are still on screen; they will save on your next edit.`); }
   finally { S.saving = false; if (S.savePending) { S.savePending = false; saveCode(); } }
 }
-async function submit() { tick(); Object.assign(S.draft, { state: "submitted", submitted_at: nowIso() }); S.activeSince = null; S.dirty = true; await saveCode(); render(); }
+async function submit() { tick(); for (const d of S.cb.fields) if (locked(d.field, S.draft)) S.draft.fields[d.field] = { value: null, status: "not_stated", quote: "" };
+  Object.assign(S.draft, { state: "submitted", submitted_at: nowIso() }); S.activeSince = null; S.dirty = true; await saveCode(); render(); }
 async function reopen() { Object.assign(S.draft, { state: "draft", submitted_at: null }); S.activeSince = Date.now(); S.dirty = true; await saveCode(); render(); }
 
 // ---------- tutorial: compare with the key ----------
@@ -703,7 +707,7 @@ function renderProgress(main, hasSamples) {
   const flags = {}; for (const p of ps) for (const [f, it] of Object.entries(S.reviews.get(p.id)?.items || {})) if (it.verdict === "flag") flags[f] = (flags[f] || 0) + 1;
   const wrap = el("div", { class: "prog" }, el("h2", { class: "section-title", text: `Sample: ${S.sample} · ${ps.length} posts` }));
   const stat = (n, l) => el("div", { class: "stat" }, el("b", { text: String(n) }), el("span", { text: l }));
-  wrap.append(el("div", { class: "stats" }, stat(counts.none, "not started"), stat(counts.draft, "draft"), stat(counts.submitted, "awaiting review"),
+  wrap.append(el("div", { class: "stats" }, stat(counts.none, "not started"), stat(counts.draft, "draft"), stat(counts.submitted, "submitted"),
     stat(counts.review + counts.flagged, "in review"), stat(counts.escalated, "escalated"), stat(counts.agreed, "agreed"),
     stat(median == null ? "—" : median.toFixed(1), "median minutes per post")));
   const fl = Object.entries(flags).sort((a, b) => b[1] - a[1]);
@@ -716,7 +720,9 @@ function renderProgress(main, hasSamples) {
       const nf = Object.values(r?.items || {}).filter(i => i.verdict === "flag").length;
       return el("tr", {}, el("td", { class: "num", text: String(p.order || "") }), el("td", { text: (p.title || "").slice(0, 70) }), el("td", {}, el("span", { class: `chip ${cls}`, text: label })),
         el("td", { class: "num", text: c?.seconds_spent ? (c.seconds_spent / 60).toFixed(1) : "—" }), el("td", { class: "num", text: nf ? String(nf) : "—" })); })))));
-  const dlRow = el("div", { class: "row", style: "margin-top:16px" }, el("button", { class: "btn", id: "dlBtn", onclick: exportAgreed, text: "Download agreed coding (JSON)" }), el("span", { class: "msg muted", id: "dlMsg", text: "Agreed posts only: the coder's answers with every resolved flag applied." }));
+  const dlRow = el("div", { class: "row", style: "margin-top:16px" }, el("button", { class: "btn", id: "dlSubBtn", onclick: exportSubmitted, text: "Download submitted coding (JSON)" }),
+    el("button", { class: "btn", id: "dlBtn", onclick: exportAgreed, text: "Download agreed coding (JSON)" }),
+    el("span", { class: "msg muted", id: "dlMsg", text: "Submitted: every submitted post as the coder left it. Agreed: posts reviewed in the app, with resolved flags applied." }));
   wrap.append(dlRow, tutorialResults());
   main.replaceChildren(wrap);
 }
@@ -734,6 +740,11 @@ function tutorialResults() {
   box.append(el("p", { class: "msg muted", text: "Latest attempt per post. Free-text answers are compared by eye, not scored." }));
   S.user?.profiles(rows.map(([id]) => id)).then(ps => { for (const td of box.querySelectorAll("td[data-uid]")) { const name = ps?.[td.dataset.uid]?.name; if (name) td.textContent = td.dataset.uid === S.me ? `${name} (you)` : name; } }).catch(() => {});
   return box;
+}
+async function exportSubmitted() {
+  const rows = postsInSample().filter(p => S.codes.get(p.id)?.state === "submitted").map(p => { const c = S.codes.get(p.id);
+    return { post_id: p.id, sample: p.sample, schema_version: c.schema_version, coder: c.coder, seconds_spent: c.seconds_spent, submitted_at: c.submitted_at, coder_note: c.note || "", fields: c.fields }; });
+  S.be.download(`submitted_coding_${S.sample}.json`, JSON.stringify(rows, null, 2)); $("dlMsg").textContent = `Downloaded ${rows.length} submitted posts.`;
 }
 async function exportAgreed() {
   const rows = postsInSample().filter(p => S.reviews.get(p.id)?.state === "agreed").map(p => { const c = S.codes.get(p.id), r = S.reviews.get(p.id);

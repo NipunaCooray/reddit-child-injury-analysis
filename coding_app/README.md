@@ -10,7 +10,7 @@ Nobody can read anything until the study lead adds their email in the Admin tab.
 
 | Role | Can |
 |---|---|
-| `coder` | Do the tutorial, code posts, and reply to the reviewer's notes. Can't change the coding once its review is agreed. |
+| `coder` | Do the tutorial, code posts, and reply to the reviewer's notes. Can't change the coding once its review is agreed. `injury_event_check` comes first; a non-event locks every other field as not stated (schema 1.6.0). |
 | `reviewer` | Do the tutorial and review coded posts. Can't code. |
 | `admin` | Everything, including the Admin tab: people, loading files, backups. |
 
@@ -49,7 +49,7 @@ To remove a post, delete it in the Firebase console (Firestore, `posts`).
 
 ## Backups
 
-Admin tab, **Download a full backup**: one JSON file with every collection (people, posts, codebook, tutorial, coding, reviews). Do it after each coding session and keep it with the study's data, not in git. Progress, **Download agreed coding**, gives the agreed coding for one sample, which is what the statistics use.
+Admin tab, **Download a full backup**: one JSON file with every collection (people, posts, codebook, tutorial, coding, reviews). Do it after each coding session and keep it with the study's data, not in git. Progress, **Download submitted coding**, gives every submitted post in one sample as the coder left it, which is what the statistics use (the study lead checks coding outside the app). **Download agreed coding** covers only posts reviewed in the app's Review tab, which the current design doesn't use.
 
 ## Tests
 

@@ -19,7 +19,7 @@ from pathlib import Path
 
 from common import find_repo_root, load_jsonl, require_selftext
 from schema import (FIELDS, VOCAB, DEFINITIONS, VALUE_NOTES, PHASE_TITLES, SCHEMA_VERSION, STATUSES,
-                    FREE_TEXT_MAX, AUDIT_FIELD, FALL_MECHANISMS, CONDITIONAL_FALL_FIELDS, field_type)
+                    FREE_TEXT_MAX, AUDIT_FIELD, FALL_MECHANISMS, CONDITIONAL_FALL_FIELDS, HUMAN_SKIP_VALUES, field_type)
 
 STATUS_HELP = {
     "stated": "The post says it. The quote is copied word for word from the post.",
@@ -43,6 +43,7 @@ def codebook() -> dict:
             "audit_field": AUDIT_FIELD,  # never not_stated; use 'unclear'
             "fall_mechanisms": sorted(FALL_MECHANISMS),
             "conditional_fall_fields": list(CONDITIONAL_FALL_FIELDS),  # not_stated unless mechanism_iceci is a fall
+            "skip_values": sorted(HUMAN_SKIP_VALUES),  # audit value that leaves every other field not_stated
         },
     }
 

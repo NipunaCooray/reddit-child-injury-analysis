@@ -301,6 +301,15 @@ class TestTutorialKey(unittest.TestCase):
                     self.assertEqual((r["fields"][f]["value"], r["fields"][f]["status"]), (key[f]["value"], key[f]["status"]), f)
                 self.assertNotEqual(key[AUDIT_FIELD]["status"], "not_stated")
 
+    def test_non_event_keys_skip_every_other_field(self):
+        # Human coding rule from 1.6.0: a non-event leaves every other field not_stated
+        from schema import HUMAN_SKIP_VALUES
+        skipped = [p for p in self.tut["posts"] if p["key"][AUDIT_FIELD]["value"] in HUMAN_SKIP_VALUES]
+        self.assertTrue(skipped, "the tutorial should teach the skip rule")
+        for p in skipped:
+            with self.subTest(post=p["id"]):
+                self.assertEqual([f for f in FIELD_NAMES if f != AUDIT_FIELD and p["key"][f]["status"] != "not_stated"], [])
+
 class TestPromptSpec(unittest.TestCase):
 
     def test_spec_lists_every_field_and_value(self):

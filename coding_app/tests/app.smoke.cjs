@@ -90,7 +90,7 @@ async function chooseFiles(app, input, paths) {
   const postFile = path.join(out, "fake1.json"); fs.writeFileSync(postFile, JSON.stringify(post));
   await chooseFiles(a, a.q('input[type="file"][multiple]'), [path.join(out, "codebook.json"), ...tutorialFiles, postFile]);
   const ready = a.q(".banner.info")?.textContent || "";
-  ok(/Codebook, schema 1\.5\.0/.test(ready) && /8 tutorial posts/.test(ready) && /1 posts in sample "practice"/.test(ready), "load preview summarises the files");
+  ok(ready.includes(`Codebook, schema ${codebook.schema_version}`) && /8 tutorial posts/.test(ready) && /1 posts in sample "practice"/.test(ready), "load preview summarises the files");
   a.btn("Load ").click(); await sleep(120);
   ok(db.data.has("config/codebook") && db.data.has("posts/fake1"), "codebook and post loaded");
   ok(db.data.get("tutorial/tutorial-1-stairs") && !("key" in db.data.get("tutorial/tutorial-1-stairs")) && !("label" in db.data.get("tutorial/tutorial-1-stairs")), "tutorial post stored without its key or label");
@@ -114,6 +114,14 @@ async function chooseFiles(app, input, paths) {
   ok(/^25 of 25 fields match the key/.test(c.q(".pane.form .banner")?.textContent || ""), "key coding scores 25 of 25");
   ok(c.q(".section-title").textContent.includes("Submersion near miss"), "label shown after checking");
   ok(!c.q("#coderNote"), "no reviewer note in the tutorial");
+  // skip rule (1.6.0): the event check comes first, and a non-event locks every other field
+  c.qa(".plist button").find(b => b.textContent.includes(keys["tutorial-5-rental"].title)).click(); await sleep();
+  ok(c.q(".pane.form .cell .fname")?.textContent === "injury_event_check", "the event check comes first");
+  await c.fillCell("injury_event_check", keys["tutorial-5-rental"].key.injury_event_check);
+  ok(c.qa(".pane.form .cell.locked").length === codebook.fields.length - 1 && c.seen().includes("Not coded: the post is not an injury event"), "a non-event locks every other field");
+  c.btn("Check against the key").click(); await sleep(150);
+  ok(new RegExp(`^${codebook.fields.length} of ${codebook.fields.length} fields match the key`).test(c.q(".pane.form .banner")?.textContent || ""), "a non-event scores in full with only the event check coded");
+  ok(Object.entries(db.data.get("tutorial_codes/tutorial-5-rental--uCoder")?.fields || {}).every(([f, x]) => f === "injury_event_check" || x.status === "not_stated"), "skipped fields are saved as not stated");
 
   // ---- C. the coder codes the practice post ----
   c.q("#tabCode").click(); await sleep(80);
@@ -148,11 +156,14 @@ async function chooseFiles(app, input, paths) {
   const rv = db.data.get("reviews/fake1");
   ok(rv.state === "agreed" && rv.items.injury_event_check.thread.length === 2, "review agreed with both thread messages kept");
   a.q("#tabProgress").click(); await sleep(80);
-  ok(a.seen().includes("Coder") && a.seen().includes("1 of 8"), "Progress shows the coder's tutorial result by name");
+  ok(a.seen().includes("Coder") && a.seen().includes("2 of 8"), "Progress shows the coder's tutorial result by name");
   a.btn("Download agreed coding").click(); await sleep(60);
   const rows = JSON.parse(a.saved.at(-1)?.data || "[]");
   ok(rows.length === 1 && rows[0].fields.injury_event_check.value === "actual_injury_event", "export applies the resolved flag");
   ok(rows[0]?.coder_note?.includes("went down her arm"), "export carries the coder's note");
+  a.btn("Download submitted coding").click(); await sleep(60);
+  const sub = JSON.parse(a.saved.at(-1)?.data || "[]");
+  ok(sub.length === 1 && sub[0].fields.injury_event_check.value === "suspected_injury_event" && sub[0].coder_note.includes("went down her arm"), "submitted export gives the coder's own answers, no review needed");
   a.q("#tabAdmin").click(); await sleep(60);
   a.btn("Download a full backup").click(); await sleep(120);
   const bk = JSON.parse(a.saved.at(-1)?.data || "{}");

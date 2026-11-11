@@ -31,7 +31,7 @@ import html
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-SCHEMA_VERSION = "1.5.0"
+SCHEMA_VERSION = "1.6.0"
 SCHEMA_HISTORY = [
     ("1.0.0", "2026-10-21", "Initial 24-field Haddon/ICECI-adapted schema for the n=50 pilot."),
     ("1.1.0", "2026-10-21", "After n=50 nano/mini pilot: removed developmental_trigger value 'none_stated' "
@@ -57,6 +57,14 @@ SCHEMA_HISTORY = [
                             "actual_injury_event (WHO non-fatal drowning); a face under water lifted out at "
                             "once with no distress is near_miss; worry alone is not suspicion; a side effect "
                             "of a correct dose is not_an_injury_event. Prompt text and value notes only."),
+    ("1.6.0", "2026-11-10", "injury_event_check states the study scope: an unintentional (accidental) incident to "
+                            "a child under 5. Intentional harm (assault, maltreatment, self-harm), a child clearly "
+                            "aged 5 or older, and illness with no external cause (e.g. febrile seizure, nappy rash) "
+                            "are not_an_injury_event; an unstated age is not grounds for exclusion. Human coding "
+                            "skips every other field when injury_event_check is not_an_injury_event "
+                            "(HUMAN_SKIP_VALUES); the model still fills all fields. Harm from another child under 5 "
+                            "(hitting, biting, pushing) counts as unintentional; a child unhurt in an impact that "
+                            "injured only an adult (e.g. head-butting a parent) is near_miss. After the practice round."),
 ]
 
 FREE_TEXT_MAX = 300
@@ -189,9 +197,12 @@ VOCAB: Dict[str, Tuple[str, ...]] = {
 
 # Audit value that disagrees with Phase 1 is_injury_event == true (candidate false positive)
 AUDIT_NEGATIVE = {"not_an_injury_event"}
-# Outside Phase 1's "harmful incident" definition, but whether it is in scope is a study decision,
-# so it is reported separately rather than counted as a false positive
+# Outside Phase 1's "harmful incident" definition, so it is reported separately rather than
+# counted as a false positive; near misses are included in the analysis (decided 2026-11-04)
 AUDIT_NEAR_MISS = {"near_miss"}
+# Human coding (from 1.6.0): when the coder judges the post not an injury event, every other
+# field is left not_stated. The model still fills all fields; its audit stays independent.
+HUMAN_SKIP_VALUES = AUDIT_NEGATIVE
 
 MULTI_VALUED = {"help_seeking"}
 
@@ -242,7 +253,7 @@ DEFINITIONS: Dict[str, str] = {
     # Same construct as Phase 1's is_injury_event (classify_injuries_openai.py SYSTEM_PROMPT), so the
     # audit measures Phase 1's error rather than a different definition. From 1.5.0 it also settles
     # exposures with no symptoms, which Phase 1's definition left open.
-    "injury_event_check": "Ignoring any earlier screening: does this post describe a REAL accidental harmful incident to a child (e.g. fall, burn, ingestion, bite, fracture, head injury, choking, poisoning, drowning) that actually happened or is clearly suspected? The incident is the hazard reaching the child, whatever the outcome: a child who swallowed a medicine or chemical, or was given more than the labelled or prescribed dose, is an actual injury event even with no symptoms; so is a child who came out of water coughing, spluttering, blue or limp (non-fatal drowning). Suspected: it is uncertain whether the exposure happened (e.g. open bottle, unsure if any was swallowed), or symptoms appeared afterwards; worry alone, with no symptom and no doubt about what happened, is not suspicion. Near miss: a real hazardous incident happened but the hazard was stopped before it reached the child (e.g. caught before hitting anything, object taken out of the mouth before swallowing, face went under water and a child who could not get out alone was lifted out at once with no coughing or distress). Not an injury event: sleep/nap, feeding, behaviour or general parenting topics; a side effect of a correctly given dose; a child who ducked under water in play and came up unaided; purely hypothetical or advice-only posts with no actual incident; metaphor ('fell behind'); injuries only to adults. Span: the passage describing the incident, or for not_an_injury_event the passage showing what the post is about. This judgement does not change how you fill the other fields. Put the judgement in value, not in status. Status: stated if the post explicitly describes the incident and the harm (or explicitly says no harm occurred); inferred if your judgement rests on the post as a whole. Always give a value: use 'unclear' rather than not_stated.",
+    "injury_event_check": "Ignoring any earlier screening: does this post describe a REAL unintentional (accidental) harmful incident to a child under 5 (e.g. fall, burn, ingestion, bite, fracture, head injury, choking, poisoning, drowning) that actually happened or is clearly suspected? The incident is the hazard reaching the child, whatever the outcome: a child who swallowed a medicine or chemical, or was given more than the labelled or prescribed dose, is an actual injury event even with no symptoms; so is a child who came out of water coughing, spluttering, blue or limp (non-fatal drowning). Suspected: it is uncertain whether the exposure happened (e.g. open bottle, unsure if any was swallowed), or symptoms appeared afterwards; worry alone, with no symptom and no doubt about what happened, is not suspicion. Near miss: a real hazardous incident happened but the hazard was stopped before it reached the child (e.g. caught before hitting anything, object taken out of the mouth before swallowing, face went under water and a child who could not get out alone was lifted out at once with no coughing or distress); a child unhurt in an impact that injured only an adult (e.g. a toddler head-butting a parent) is also a near miss. Not an injury event: intentional harm (assault, maltreatment or self-harm), though harm from another child under 5 (hitting, biting, pushing) counts as unintentional; a child clearly aged 5 or older (if the age is not stated, judge the incident as usual); illness or a medical condition with no external cause (e.g. febrile seizure, nappy rash); sleep/nap, feeding, behaviour or general parenting topics; a side effect of a correctly given dose; a child who ducked under water in play and came up unaided; purely hypothetical or advice-only posts with no actual incident; metaphor ('fell behind'); injuries only to adults. Span: the passage describing the incident, or for not_an_injury_event the passage showing what the post is about. Put the judgement in value, not in status. Status: stated if the post explicitly describes the incident and the harm (or explicitly says no harm occurred); inferred if your judgement rests on the post as a whole. Always give a value: use 'unclear' rather than not_stated.",
 }
 
 # Glosses for values whose meaning is not self-evident. Rendered in the prompt.
@@ -250,8 +261,8 @@ VALUE_NOTES: Dict[str, Dict[str, str]] = {
     "injury_event_check": {
         "actual_injury_event": "the hazard reached the child (impact, burn, ingestion or excess dose, submersion with coughing or distress), with or without injury",
         "suspected_injury_event": "uncertain whether the exposure happened (e.g. possible ingestion), or symptoms appeared afterwards",
-        "near_miss": "a real hazardous incident, stopped before the hazard reached the child",
-        "not_an_injury_event": "no actual hazardous incident to a child (off-topic, hypothetical, advice-only, adult-only)",
+        "near_miss": "a real hazardous incident, stopped before the hazard reached the child; or the child unhurt in an impact that injured only an adult",
+        "not_an_injury_event": "no unintentional hazardous incident to a child under 5 (off-topic, hypothetical, advice-only, adult-only, intentional harm, child aged 5 or older, illness)",
         "unclear": "cannot tell from the post",
     },
     "supervision_status": {
