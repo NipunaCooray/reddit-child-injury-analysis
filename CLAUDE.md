@@ -37,6 +37,7 @@ Parenting posts on Reddit, analysed for child injury events.
 | 2026-11-02 | Sign-in emails are capped at 5 a day on the free Spark plan, so coders sign in with **Google**. Sign-in links always return to the official app address. | coding_app/public/backend.js |
 | 2026-11-04 | **Near misses are included in the analysis.** | README, study guide |
 | 2026-11-11 | Near misses are **reported as their own category**, not pooled with injury events. | README, study guide |
+| 2026-11-11 | **Full-run model: `gpt-5.6-sol`, reasoning `medium`**, replacing GPT-5.5 (prompted by an OpenAI shutdown notice that was corrected the same day; the choice stands on the comparison). On the 60 pilot posts at 1.6.0 the two agreed on `injury_event_check` for 57/60; Sol had no violations and is cheaper and faster. No dated snapshot exists, so the full run is one run with its date recorded. | README (model choice) |
 | 2026-11-10 | Schema **1.6.0** after the practice round. Scope: **unintentional injury to children under 5**. Intentional harm (assault, maltreatment, self-harm), a child clearly aged 5 or older, and illness with no external cause are `not_an_injury_event`; an unstated age is not grounds for exclusion. Harm from another child under 5 counts as unintentional. A child unhurt in an impact that injured only an adult (e.g. head-butting a parent) is `near_miss`. | schema.py, README, HAND_REVIEW |
 | 2026-11-10 | **Skip rule:** in human coding, `injury_event_check` comes first, and a non-event leaves every other field `not_stated` (the app locks them). The model still codes every field. Field-level agreement covers only posts the human coding treats as events. | schema.py (`HUMAN_SKIP_VALUES`), coding app, README |
 | 2026-11-10 | **No field-by-field review in the app.** The study lead checks the coder's work outside the app (Progress → Download submitted coding), and the coder corrects it with Reopen to edit. The reference standard is the coder's final submitted coding. | HAND_REVIEW |
@@ -46,7 +47,7 @@ Parenting posts on Reddit, analysed for child injury events.
 
 1. Done: the practice round (13 posts, median 19 min per post) led to schema 1.6.0, which is live in the app.
 2. **Now:** the coder codes the 120-post deep tier (sample `deeptier`) blind. The study lead checks the first 20–25 posts (Progress → Download submitted coding) before the coder continues, then checks the rest outside the app.
-3. In parallel, the study lead runs the **full model run** on the 1,237 posts at 1.6.0. The coder never sees model output.
+3. Done 2026-11-11: the **full model run** on the 1,237 posts at 1.6.0 with `gpt-5.6-sol` (tag `sol_v16`, `data/interim/confirmed_events_n1237_extractions_sol_v16.*`; QA in `reports/extraction_qa/full_sol_v16/`). 0 parse errors, 5 posts with a violation, about US$115. The coder never sees model output.
 4. Keep the schema frozen at 1.6.0 for the whole deep tier.
 5. Compute agreement: `injury_event_check` across all 120 posts; the other fields across posts the human coding treats as events.
 6. Later: a targeted tier on `supervision_status`, `object_involved`, `mechanism_detail` and `care_pathway_outcome`.

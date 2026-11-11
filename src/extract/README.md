@@ -69,6 +69,8 @@ The manifest records the excluded files and how many posts each removed. Stratum
 
 Compare the two models on unsupported-span rate, per-field `not_stated` rate and enum-violation rate. `gpt-5-nano` is the default only for consistency with Phase 1. Whichever model wins, the timing JSON records the requested model, the API-resolved model version (`model_resolved`), temperature, schema version and run date.
 
+**Model for the full run: `gpt-5.6-sol`, reasoning effort `medium` (decided 2026-11-11).** The pilot used `gpt-5.5-2026-04-23`. A deprecation email from OpenAI on 2026-11-11 listed GPT-5.5 for API shutdown on 11 December 2026; OpenAI corrected it the same day (the shutdown covers GPT-5 and o3, not GPT-5.5), but by then Sol had been compared and chosen, and the choice stands on the comparison: a newer model also stays rerunnable for longer. Both models were run on the 60 pilot posts at schema 1.6.0 with the same settings (tags `gpt55_v16` and `sol_v16`). They agreed on `injury_event_check` for 57 of 60 posts. Sol had no rule violations (GPT-5.5 had one out-of-vocabulary value), ran in 6.2 s per post against 10.0 s and cost about a quarter less. Sol leaves more fields `not_stated`, mostly on posts that are not child injury events, where GPT-5.5 had coded details of the adult. Sol has no dated snapshot, only the `gpt-5.6-sol` alias, so the full run was done in one go and its date is in the timing JSON.
+
 ## Inputs
 
 Read the Phase 1 **JSONL**, never the CSV. The JSONL keeps the full crawler record including `selftext`, while the CSV has no post body. Every script asserts `selftext` is present on the first record and exits if it is not. Labels are read from the literal key `"**labels"` (falling back to `"labels"` or a flat record).
@@ -149,6 +151,8 @@ In human coding, a post judged `not_an_injury_event` has every other field left 
 `validate_extractions.py` prints the audit and writes `audit_disagreements.csv` (candidate false positives and near misses, one row each). These are **candidates**: model disagreement is not a ground-truth error, so a human must read each one before any rate is cited. The audit judgement does not filter or blank the extraction. Excluding non-events from the analysis is a decision to make after the human check.
 
 The pilot's accepted posts are purposively stratified and over-sample Phase 1's `other`/`unknown` mechanisms, where false positives concentrate. The pilot false-positive rate therefore overstates the rate across all 1,237 posts. Estimate that rate from the full run, or from a random sample.
+
+Full run (2026-11-11, `gpt-5.6-sol`, schema 1.6.0): 847 actual (68%), 277 not an injury event (22%), 62 suspected (5%), 50 near miss (4%), 1 unclear. The non-events rose mainly because 1.6.0 narrowed the scope: feeding gagging, reflux and illness under choking (83 of 252 choking posts), children aged 5 or older, birth complications, adult-only injuries and intentional harm. The study lead reviewed a sample on 2026-11-12 and accepted the differences as a result of the tighter definitions.
 
 ## Re-scoring without re-calling the API
 
